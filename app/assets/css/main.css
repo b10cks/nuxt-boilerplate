@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+
+@layer base {
+  :root {
+    --grid-margin: 0px;
+    --content-max-width: 1296px;
+    @apply lg:[--grid-margin:2rem];
+  }
+
+  body {
+    @apply antialiased text-base bg-gray-100 text-gray-900;
+  }
+
+  .grid-area-stack {
+    grid-area: 1/1;
+  }
+
+  .content-grid {
+    @apply gap-4 lg:gap-x-8;
+
+    display: grid;
+    grid-template-columns:
+      [full-width-start]
+      minmax(var(--grid-margin), 1fr)
+      [content-start]
+      minmax(0, calc((var(--content-max-width) - 2 * var(--grid-margin)) / 12 * 2))
+      [narrow-start]
+      repeat(8, minmax(0, calc((var(--content-max-width) - 2 * var(--grid-margin)) / 12)))
+      [narrow-end]
+      minmax(0, calc((var(--content-max-width) - 2 * var(--grid-margin)) / 12 * 2))
+      [content-end]
+      minmax(var(--grid-margin), 1fr)
+      [full-width-end];
+  }
+
+  .content-grid > :not(.content-full-width):not([class*='col-']) {
+    grid-column: content;
+  }
+
+  .content-grid > .content-full-width {
+    grid-column: full-width;
+  }
+
+  @media (min-width: 1024px) {
+    .content-grid > .content-narrow {
+      grid-column: narrow !important;
+    }
+  }
+}
+
+@layer components {
+  .prose {
+    a {
+      @apply underline-offset-2 underline transition-colors duration-200;
+      &:hover {
+      }
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      @apply font-serif font-semibold;
+    }
+    h1 {
+      @apply text-3xl lg:text-4xl mb-12;
+    }
+    * + h1 {
+      @apply mt-12;
+    }
+    h2 {
+      @apply text-2xl lg:text-3xl mb-8;
+    }
+    * + h2 {
+      @apply mt-8;
+    }
+    h3 {
+      @apply text-xl lg:text-2xl mb-6;
+    }
+    * + h3 {
+      @apply mt-6;
+    }
+    h4 {
+      @apply text-lg lg:text-xl mb-6;
+    }
+    * + h4 {
+      @apply mt-6;
+    }
+
+    p + * {
+      @apply mt-6;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-inline-start: 0;
+    }
+    li {
+      @apply my-4 ml-8 relative list-disc;
+    }
+    blockquote {
+      @apply border-l-4 border-gray-500 pl-4 italic text-gray-600 mb-12 py-4;
+    }
+    * + blockquote {
+      @apply mt-12;
+    }
+    hr {
+      @apply my-6 border-t border-gray-300;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .transition {
+    transition: none !important;
+  }
+}

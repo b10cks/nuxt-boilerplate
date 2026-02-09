@@ -1,0 +1,46 @@
+{
+  "name": "nuxt-boilerplate",
+  "version": "1.0.0",
+  "homepage": "https://github.com/b10cks/nuxt-boilerplate#readme",
+  "bugs": {
+    "url": "https://github.com/b10cks/nuxt-boilerplate/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Michael Wallner",
+    "email": "m.wallner@coderscantina.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/b10cks/nuxt-boilerplate.git"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev --port 3001 --https --ssl-cert localhost.crt --ssl-key localhost.key",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@b10cks/nuxt": "^0.10.4",
+    "@nuxt/icon": "2.2.1",
+    "@nuxt/image": "2.0.0",
+    "@tailwindcss/vite": "^4.1.18",
+    "@vueuse/core": "^14.2.0",
+    "clsx": "^2.1.1",
+    "marked": "^17.0.1",
+    "nuxt": "^4.3.1",
+    "nuxt-schema-org": "^5.0.10",
+    "reka-ui": "^2.8.0",
+    "tailwindcss": "^4.1.18",
+    "vue": "^3.5.28",
+    "vue-router": "^5.0.2"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.28.0",
+    "oxlint": "^1.43.0",
+    "typescript": "^5.9.3",
+    "vite-svg-loader": "^5.1.0"
+  }
+}
