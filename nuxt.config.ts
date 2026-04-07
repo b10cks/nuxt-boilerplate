@@ -18,7 +18,7 @@ export default defineNuxtConfig({
   b10cks: {
     accessToken: process.env.NUXT_B10CKS_API_TOKEN || '',
     apiUrl: process.env.NUXT_B10CKS_API_URL || 'https://api.b10cks.com/api',
-    componentsDir: '~/app/b10cks',
+    componentsDir: '~/b10cks',
   },
 
   runtimeConfig: {
@@ -26,6 +26,35 @@ export default defineNuxtConfig({
       appEnv: process.env.NUXT_PUBLIC_APP_ENV,
     },
   },
+
+  icon: {
+    size: '1rem',
+    mode: 'svg',
+    serverBundle: {
+      collections: [],
+    },
+    customCollections: [
+      {
+        prefix: 'b10cks',
+        dir: './assets/icons',
+      },
+    ],
+  },
+
+  /*
+    i18n: {
+      defaultLocale: 'en',
+      strategy: 'prefix',
+      detectBrowserLanguage: {
+        useCookie: false,
+        redirectOn: 'root',
+      },
+      locales: [
+        { code: 'de', language: 'de-AT', name: 'Deutsch' },
+        { code: 'en', language: 'en-US', name: 'English' },
+      ],
+    },
+  */
 
   image: {
     provider: 'ilum',
