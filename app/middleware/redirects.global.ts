@@ -2,9 +2,9 @@ const staticRedirects: { [key: string]: string } = {
   '/home': '/',
 }
 
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware(async (to) => {
   const { useRedirects } = useB10cksApi()
-  const { data: redirects } = useRedirects()
+  const { data: redirects } = await useRedirects()
 
   if (staticRedirects[to.path] && !to.query.b10cks_vid) {
     const target = staticRedirects[to.path]

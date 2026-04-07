@@ -5,8 +5,9 @@ const slug = Array.isArray(route.params.slug)
   : route.params.slug || 'home'
 
 const { useContent } = useB10cksApi()
-const { data: content, execute } = useContent(slug, {}, { immediate: false })
-await execute()
+const { data: content } = await useContent(slug, {
+  vid: route.query.b10cks_vid || 'published',
+})
 
 provide('content', content)
 </script>
