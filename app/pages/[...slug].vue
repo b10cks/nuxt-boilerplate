@@ -18,8 +18,8 @@ provide('content', content)
       <B10cksComponent
         v-if="content"
         v-bind="{
-          block: { id: content.id, block: content.block, ...content.content },
-          name: content.name,
+          block: { id: content.id, ...content.content },
+          content: content,
         }"
       />
     </NuxtLayout>
