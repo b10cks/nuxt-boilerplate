@@ -96,11 +96,13 @@
       [full-width-start]
       minmax(var(--grid-margin), 1fr)
       [content-start]
-      minmax(0, calc((var(--content-max-width) - 2 * var(--grid-margin)) / 12 * 2))
+      minmax(0, calc((var(--content-max-width) - 2 * var(--grid-margin)) / 12))
+      minmax(0, calc((var(--content-max-width) - 2 * var(--grid-margin)) / 12))
       [narrow-start]
       repeat(8, minmax(0, calc((var(--content-max-width) - 2 * var(--grid-margin)) / 12)))
       [narrow-end]
-      minmax(0, calc((var(--content-max-width) - 2 * var(--grid-margin)) / 12 * 2))
+      minmax(0, calc((var(--content-max-width) - 2 * var(--grid-margin)) / 12))
+      minmax(0, calc((var(--content-max-width) - 2 * var(--grid-margin)) / 12))
       [content-end]
       minmax(var(--grid-margin), 1fr)
       [full-width-end];
