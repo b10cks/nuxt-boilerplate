@@ -1,11 +1,10 @@
 import tailwindcss from '@tailwindcss/vite'
 import svgLoader from 'vite-svg-loader'
 
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
 
-  devtools: { enabled: true },
+  devtools: { enabled: false },
 
   modules: [
     '@b10cks/nuxt',
@@ -16,33 +15,31 @@ export default defineNuxtConfig({
   ],
 
   b10cks: {
-    accessToken: process.env.NUXT_B10CKS_API_TOKEN || '',
+    accessToken: process.env.NUXT_B10CKS_ACCESS_TOKEN || process.env.NUXT_B10CKS_API_TOKEN || '',
     apiUrl: process.env.NUXT_B10CKS_API_URL || 'https://api.b10cks.com/api',
     componentsDir: '~/b10cks',
   },
 
   runtimeConfig: {
     public: {
-      appEnv: process.env.NUXT_PUBLIC_APP_ENV,
+      appEnv: process.env.NUXT_PUBLIC_APP_ENV || 'production',
+      siteUrl: process.env.NUXT_PUBLIC_APP_URL || '',
     },
   },
 
   icon: {
-    size: '1rem',
-    mode: 'svg',
-    serverBundle: {
-      collections: [],
-    },
+    provider: 'server',
     customCollections: [
       {
-        prefix: 'b10cks',
-        dir: './assets/icons',
+        prefix: 'custom',
+        dir: './app/assets/icons',
       },
     ],
   },
 
   /*
     i18n: {
+      baseUrl: process.env.NUXT_PUBLIC_APP_URL || '',
       defaultLocale: 'en',
       strategy: 'prefix',
       detectBrowserLanguage: {
@@ -50,8 +47,7 @@ export default defineNuxtConfig({
         redirectOn: 'root',
       },
       locales: [
-        { code: 'de', language: 'de-AT', name: 'Deutsch' },
-        { code: 'en', language: 'en-US', name: 'English' },
+        { file: 'en.ts', code: 'en', language: 'en-US', name: 'English' },
       ],
     },
   */
@@ -73,24 +69,71 @@ export default defineNuxtConfig({
     '*': {
       headers: {
         'Content-Security-Policy':
-          "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: https://api.b10cks.com; media-src 'self' https://api.b10cks.com; connect-src 'self' https://api.b10cks.com; font-src 'self' data: https:; frame-ancestors https://app.b10cks.com/;",
+          "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src 'self' https://api.b10cks.com; connect-src 'self' https://api.b10cks.com; font-src 'self' data: https:; frame-ancestors https://app.b10cks.com/;",
         'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
-        'X-Frame-Options': 'SAMEORIGIN',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy': 'geolocation=(), microphone=()',
+        'X-Robots-Tag':
+          (process.env.NUXT_PUBLIC_APP_ENV || 'production') === 'staging'
+            ? 'noindex, nofollow, noarchive'
+            : 'all',
       },
     },
-    '/': { headers: { 'Cache-Control': 'max-age=180, s-maxage=86400, public' } },
-    '/**': { headers: { 'Cache-Control': 'max-age=180, s-maxage=86400, public' } },
+    '/': {
+      headers:
+        (process.env.NUXT_PUBLIC_APP_ENV || 'production') === 'production'
+          ? { 'Cache-Control': 'max-age=180, s-maxage=86400, public' }
+          : {},
+    },
+    '/**': {
+      headers:
+        (process.env.NUXT_PUBLIC_APP_ENV || 'production') === 'production'
+          ? { 'Cache-Control': 'max-age=180, s-maxage=86400, public' }
+          : {},
+    },
   },
 
   app: {
+    pageTransition: { name: 'page', mode: 'out-in' },
     head: {
       htmlAttrs: {
         lang: 'en',
         dir: 'ltr',
       },
+      link: [
+        {
+          rel: 'preconnect',
+          href: 'https://api.b10cks.com',
+          crossorigin: '',
+        },
+        // {
+        //   rel: 'apple-touch-icon',
+        //   sizes: '180x180',
+        //   href: '/apple-touch-icon.png',
+        // },
+        // {
+        //   rel: 'icon',
+        //   type: 'image/x-icon',
+        //   sizes: '32x32',
+        //   href: '/favicon.ico',
+        // },
+        // {
+        //   rel: 'icon',
+        //   type: 'image/png',
+        //   sizes: '96x96',
+        //   href: '/favicon-96x96.png',
+        // },
+        // {
+        //   rel: 'icon',
+        //   type: 'image/svg+xml',
+        //   href: '/favicon.svg',
+        // },
+        {
+          rel: 'manifest',
+          href: '/site.webmanifest',
+        },
+      ],
     },
   },
 
@@ -144,7 +187,6 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    inlineDynamicImports: true,
     prerender: {
       failOnError: false,
     },

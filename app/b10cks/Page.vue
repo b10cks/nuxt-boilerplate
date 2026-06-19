@@ -10,7 +10,7 @@ defineOptions({
 
 const $img = useImage()
 const imgUrl = props.block.meta?.ogImage
-  ? $img(props.block.meta.ogImage.full_path, { width: 1200, height: 600 }, { provider: 'ilum' })
+  ? $img(props.block.meta.ogImage.full_path, { width: 1200, height: 630 }, { provider: 'ilum' })
   : undefined
 
 useSeoMeta({
@@ -19,10 +19,13 @@ useSeoMeta({
   ogTitle: () => props.block.meta?.ogTitle || props.block.meta?.title || props.content.name,
   ogDescription: () => props.block.meta?.ogDescription || props.block.meta?.description,
   ogImage: () => imgUrl,
+  robots: () => props.block.meta?.robots,
 })
 
 useSchemaOrg([
   defineWebPage({
+    name: props.block.meta?.title || props.content.name,
+    description: props.block.meta?.description,
     primaryImageOfPage: imgUrl,
   }),
 ])

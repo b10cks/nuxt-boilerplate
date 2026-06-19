@@ -3,8 +3,11 @@ import type { RouteLocationRaw } from '#vue-router'
 import type { B10cksLink } from '~/b10cks/types'
 
 export default function useB10cksLink() {
+  const route = useRoute()
+
   return (
-    link: B10cksLink | undefined
+    link: B10cksLink | undefined,
+    params?: string
   ):
     | {
         to: string | RouteLocationRaw
@@ -15,18 +18,44 @@ export default function useB10cksLink() {
       return
     }
 
-    const { type, url, email, anchor, target = '_self' } = link
-
-    let to = url
-    if (type === 'email') {
+    if (link.type === 'email') {
       return {
-        to: `mailto:${email}`,
-        target,
+        to: `mailto:${link.email}`,
       }
     }
 
-    if (anchor) {
-      to = `${to.trim()}#${anchor}`
+    const target = link.target || '_self'
+    let to = link.url || ''
+
+    // Internal drawer links — open as a query param overlay
+    const drawerPattern = '_drawers/'
+    if (to.includes(drawerPattern)) {
+      return {
+        to: {
+          query: {
+            drawer: to.split(drawerPattern).pop(),
+          },
+        },
+      }
+    }
+
+    const whitelistedParams = ['b10cks_rv']
+    const searchParams = new URLSearchParams(params ?? ('params' in link ? link.params : undefined))
+
+    whitelistedParams.forEach((param) => {
+      const value = route.query[param] as string | undefined
+      if (value) {
+        searchParams.append(param, value)
+      }
+    })
+
+    const queryString = searchParams.toString()
+    if (queryString) {
+      to = `${to}${to.includes('?') ? '&' : '?'}${queryString}`
+    }
+
+    if ('anchor' in link && link.anchor) {
+      to = `${to.trim()}#${link.anchor}`
     }
 
     return {
