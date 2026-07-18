@@ -1,5 +1,20 @@
+import type { LocationQuery } from 'vue-router'
+
 const staticRedirects: { [key: string]: string } = {
   '/home': '/',
+}
+
+function toQueryString(query: LocationQuery): string {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(query)) {
+    for (const entry of Array.isArray(value) ? value : [value]) {
+      if (entry != null) {
+        params.append(key, entry)
+      }
+    }
+  }
+  const queryString = params.toString()
+  return queryString ? `?${queryString}` : ''
 }
 
 export default defineNuxtRouteMiddleware(async (to) => {
@@ -8,20 +23,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (staticRedirects[to.path] && !to.query.b10cks_vid) {
     const target = staticRedirects[to.path]
-    const queryString =
-      to.query && Object.keys(to.query).length > 0
-        ? '?' + new URLSearchParams(to.query).toString()
-        : ''
-    return navigateTo(target + queryString)
+    return navigateTo(target + toQueryString(to.query))
   }
 
   const redirect = redirects.value && redirects.value[to.path]
   if (redirect && !to.query.b10cks_vid) {
-    const target = redirect.target
-    const queryString =
-      to.query && Object.keys(to.query).length > 0
-        ? '?' + new URLSearchParams(to.query).toString()
-        : ''
-    return navigateTo(target + queryString, { statusCode: redirect.status_code })
+    return navigateTo(redirect.target + toQueryString(to.query), {
+      redirectCode: redirect.status_code,
+    })
   }
 })

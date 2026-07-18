@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
-
 import type { B10cksError } from '~/b10cks/types'
 
 const { useContent } = useB10cksApi()
 const props = defineProps({
   error: Object as () => NuxtError,
 })
-const { data: content } = await useContent<B10cksError>('_error', {
-  rv: String(Date.now()),
-})
+const { data: content } = await useContent<B10cksError>('_error')
 </script>
 
 <template>

@@ -15,9 +15,16 @@ export default defineNuxtConfig({
   ],
 
   b10cks: {
-    accessToken: process.env.NUXT_B10CKS_ACCESS_TOKEN || process.env.NUXT_B10CKS_API_TOKEN || '',
-    apiUrl: process.env.NUXT_B10CKS_API_URL || 'https://api.b10cks.com/api',
+    // accessToken and apiUrl come from the environment: Nuxt maps
+    // NUXT_PUBLIC_B10CKS_ACCESS_TOKEN and NUXT_PUBLIC_B10CKS_API_URL onto
+    // runtimeConfig.public.b10cks at runtime, so they stay out of this file.
     componentsDir: '~/b10cks',
+    // Keep block selection visible below the sticky header while editing.
+    // Can also be tuned in CSS via `--b10cks-scroll-offset`.
+    scrollOffset: 80,
+    // Only the b10cks editor may drive the preview bridge (matches the CSP
+    // frame-ancestors below).
+    allowedOrigins: ['https://app.b10cks.com'],
   },
 
   runtimeConfig: {
@@ -190,12 +197,21 @@ export default defineNuxtConfig({
     prerender: {
       failOnError: false,
     },
+    compressPublicAssets: true,
   },
   telemetry: {
     enabled: false,
   },
   experimental: {
     payloadExtraction: true,
+    // Nuxt 4.5: stream SSR HTML incrementally for faster TTFB. Bot/crawler
+    // user agents automatically get fully-buffered responses for SEO safety.
+    ssrStreaming: true,
+    // Nuxt 4.5: forward a prefetched route's preload hints (e.g. hero images
+    // via useHead/NuxtImg) as prefetch hints — pairs with payloadExtraction.
+    prefetchPreloadTags: true,
+    // Nuxt 4.5: reuse Vite's file watcher instead of running a second one
+    // (less memory/file handles; becomes the default in v5).
+    watcher: 'builder',
   },
-  compressPublicAssets: true,
 })

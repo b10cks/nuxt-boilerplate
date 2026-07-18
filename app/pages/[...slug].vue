@@ -15,6 +15,13 @@ if (error.value) {
   throw error.value
 }
 
+// Live-updates while editing in the b10cks editor; outside preview mode it
+// simply tracks the fetched content tree.
+const tree = usePreviewContent(() => content.value?.content ?? {})
+const block = computed(() =>
+  content.value ? { id: content.value.id, block: content.value.block, ...tree.value } : undefined
+)
+
 provide('content', content)
 </script>
 
@@ -22,11 +29,9 @@ provide('content', content)
   <div>
     <NuxtLayout>
       <B10cksComponent
-        v-if="content"
-        v-bind="{
-          block: { id: content.id, block: content.block, ...content.content },
-          content: content,
-        }"
+        v-if="content && block"
+        :block="block"
+        :content="content"
       />
     </NuxtLayout>
   </div>

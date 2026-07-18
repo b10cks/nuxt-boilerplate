@@ -1,5 +1,4 @@
 import type { RouteLocationRaw } from '#vue-router'
-
 import type { B10cksLink } from '~/b10cks/types'
 
 export default function useB10cksLink() {
@@ -24,8 +23,8 @@ export default function useB10cksLink() {
       }
     }
 
-    const target = link.target || '_self'
-    let to = link.url || ''
+    const target = ('target' in link && link.target) || '_self'
+    let to = ('url' in link && link.url) || ''
 
     // Internal drawer links — open as a query param overlay
     const drawerPattern = '_drawers/'

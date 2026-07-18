@@ -52,7 +52,7 @@ const year = computed(() => new Date().getFullYear())
         v-if="config?.copyright"
         v-editable-field="{ id: config?.id, field: 'copyright' }"
         class="order-2 w-full pt-2 text-center md:order-1 md:text-left"
-        :content="config.copyright.replace('{year}', year)"
+        :content="config.copyright.replace('{year}', String(year))"
       />
     </div>
   </footer>
