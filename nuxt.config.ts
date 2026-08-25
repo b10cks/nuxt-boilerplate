@@ -204,9 +204,9 @@ export default defineNuxtConfig({
   },
   experimental: {
     payloadExtraction: true,
-    // Nuxt 4.5: stream SSR HTML incrementally for faster TTFB. Bot/crawler
-    // user agents automatically get fully-buffered responses for SEO safety.
-    ssrStreaming: true,
+    // ssrStreaming is deliberately off. On Nuxt 4.5 with @b10cks/nuxt it ships
+    // the HTML shell with an empty __NUXT_DATA__ payload, so the client has
+    // nothing to hydrate against and every page renders blank after hydration.
     // Nuxt 4.5: forward a prefetched route's preload hints (e.g. hero images
     // via useHead/NuxtImg) as prefetch hints — pairs with payloadExtraction.
     prefetchPreloadTags: true,
