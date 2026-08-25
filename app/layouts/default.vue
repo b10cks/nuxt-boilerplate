@@ -1,4 +1,6 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+await provideB10cksConfig()
+</script>
 
 <template>
   <div class="flex min-h-screen flex-col">

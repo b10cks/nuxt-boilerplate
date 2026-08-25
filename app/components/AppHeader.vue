@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import Logo from '~/assets/logo.svg?component'
-import type { B10cksConfig } from '~/b10cks/types'
 
-const { useB10cksConfig } = useB10cksApi()
-const { config } = await useB10cksConfig<B10cksConfig>()
+const config = useB10cksSiteConfig()
 
 const showMenu = ref(false)
 const toggleMenu = () => {
@@ -40,7 +38,7 @@ const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value
               v-for="item in config.mainMenu"
               :key="item.id"
               :block="item"
-              class="ease-butter cursor-pointer transition-colors duration-200"
+              class="cursor-pointer transition-colors duration-200 ease-butter"
             />
           </nav>
           <B10cksComponent
@@ -96,7 +94,7 @@ const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value
     id="main-menu"
     :class="[
       'pointer-events-auto fixed inset-0 z-50 backdrop-blur-sm',
-      'ease-embellishment transition-transform delay-0 duration-1000',
+      'transition-transform delay-0 duration-1000 ease-embellishment',
       menuOverlayClasses,
     ]"
     aria-modal="true"
@@ -145,14 +143,14 @@ const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value
             v-for="(item, i) in config.mainMenu"
             :key="item.id"
             :class="[
-              'ease-butter transition-all duration-500',
+              'transition-all duration-500 ease-butter',
               showMenu ? 'translate-x-0 opacity-100' : 'translate-y-full opacity-0',
             ]"
             :style="{ transitionDelay: `${i * 100 + 200}ms` }"
           >
             <B10cksComponent
               :block="item"
-              class="ease-butter cursor-pointer uppercase transition-colors duration-500"
+              class="cursor-pointer uppercase transition-colors duration-500 ease-butter"
               @click="toggleMenu"
             />
           </div>

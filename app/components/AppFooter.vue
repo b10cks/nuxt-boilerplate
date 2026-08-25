@@ -1,9 +1,7 @@
 <script lang="ts" setup>
 import Logo from '~/assets/logo.svg?component'
-import type { B10cksConfig } from '~/b10cks/types'
 
-const { useB10cksConfig } = useB10cksApi()
-const { config } = await useB10cksConfig<B10cksConfig>()
+const config = useB10cksSiteConfig()
 
 const year = computed(() => new Date().getFullYear())
 </script>

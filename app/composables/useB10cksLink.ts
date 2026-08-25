@@ -26,19 +26,26 @@ export default function useB10cksLink() {
     const target = ('target' in link && link.target) || '_self'
     let to = ('url' in link && link.url) || ''
 
-    // Internal drawer links — open as a query param overlay
+    // Drawer links never navigate: they only set `?drawer=<slug>` on the current
+    // location. The existing query is spread so preview params (b10cks_vid,
+    // b10cks_rv) survive; `drawer` is overwritten, so a drawer-to-drawer link
+    // swaps instead of stacking.
     const drawerPattern = '_drawers/'
     if (to.includes(drawerPattern)) {
       return {
         to: {
+          path: route.path,
           query: {
+            ...route.query,
             drawer: to.split(drawerPattern).pop(),
           },
         },
       }
     }
 
-    const whitelistedParams = ['b10cks_rv']
+    // Carried across in-preview navigation so the editor keeps showing the
+    // previewed revision and version instead of falling back to published.
+    const whitelistedParams = ['b10cks_rv', 'b10cks_vid']
     const searchParams = new URLSearchParams(params ?? ('params' in link ? link.params : undefined))
 
     whitelistedParams.forEach((param) => {
