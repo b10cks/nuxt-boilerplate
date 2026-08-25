@@ -20,6 +20,10 @@
     "dev": "TMPDIR=/tmp NODE_OPTIONS=\"--max-old-space-size=4096 --no-warnings=ExperimentalWarning\" nuxt dev --port 3001 --https --ssl-cert localhost.crt --ssl-key localhost.key",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "lint": "oxlint",
+    "format": "oxfmt",
+    "typecheck": "nuxt typecheck",
+    "types:b10cks": "bunx b10cks generate types $NUXT_B10CKS_SPACE_ID",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
