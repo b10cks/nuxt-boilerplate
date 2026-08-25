@@ -44,6 +44,11 @@ export default defineNuxtConfig({
     ],
   },
 
+  // Uncomment to enable i18n. Messages come from the b10cks `translations`
+  // datasource: have each `i18n/locales/<code>.ts` do
+  // `export default defineI18nLocale(() => fetchLocale('<code>'))`
+  // with `fetchLocale` from `i18n/fetchLocale.ts`. Also uncomment
+  // '@nuxtjs/i18n' in `modules` and add it as a dependency.
   /*
     i18n: {
       baseUrl: process.env.NUXT_PUBLIC_APP_URL || '',
