@@ -75,8 +75,8 @@ export default defineNuxtConfig({
   routeRules: {
     '*': {
       headers: {
-        'Content-Security-Policy':
-          "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src 'self' https://api.b10cks.com; connect-src 'self' https://api.b10cks.com; font-src 'self' data: https:; frame-ancestors https://app.b10cks.com/;",
+        // Content-Security-Policy is set in server/plugins/csp-nonce.ts, which
+        // can carry a per-request nonce.
         'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
