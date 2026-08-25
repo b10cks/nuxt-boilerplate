@@ -61,10 +61,10 @@ npm install
 yarn install
 ```
 
-Provide an SSL-certificate in the root of the project. You can create a self-signed certificate with the following commands:
+The dev server runs over HTTPS, so it needs `localhost.crt` and `localhost.key` in the project root. Create a self-signed pair with:
 
 ```sh
-openssl req -x509 -newkey rsa:4096 -keyout localhost.pem -out localhost.pem -days 365 -nodes
+openssl req -x509 -newkey rsa:4096 -keyout localhost.key -out localhost.crt -days 365 -nodes -subj "/CN=localhost"
 ```
 
 ## Development Server
@@ -73,11 +73,11 @@ Start the development server on `https://localhost:3001`:
 
 ```bash
 # bun
-bun run dev-ssl
+bun run dev
 # npm
-npm run dev-ssl
+npm run dev
 # yarn
-yarn dev-ssl
+yarn dev
 ```
 
 ## Production
@@ -103,6 +103,14 @@ npm run preview
 # yarn
 yarn preview
 ```
+
+## Deploying behind a CDN
+
+Any CDN in front of this app **must** include `b10cks_rv` and `b10cks_vid` in its cache key.
+
+Those are the two query params the b10cks editor uses to request a specific revision and a specific version. A CDN that strips them from the cache key answers a preview request with the cached published page, so editors see stale content and cannot tell why. This is the easiest way to break preview in production.
+
+On CloudFront, add both to the cache policy's query string allowlist. On Cloudflare, add them to the Cache Key query string include list.
 
 ## License
 
