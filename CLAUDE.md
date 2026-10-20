@@ -110,6 +110,46 @@ from the page they are editing. Both redirect layers already do
 If you put a CDN in front of this app, `b10cks_rv` and `b10cks_vid` must be in its cache key.
 See README.md.
 
+## SEO
+
+Every page has one URL, one language and one h1. The rules that keep it that way:
+
+- **One URL form.** Lowercase, no trailing slash (the root keeps its `/`), no query string.
+  `server/middleware/canonical-path.ts` 301s `/About/` to `/about` in one hop.
+  `useB10cksSeo` emits the canonical link and `og:url` in that form, built with `siteUrl()`
+  (`shared/utils/siteUrl.ts`) like every other absolute URL, so canonical, hreflang and the
+  sitemap agree. An editor's `meta.canonical` overrides it. Static hosting (`nuxt generate`)
+  has no nitro at request time: do the 301s at the CDN.
+- **One origin.** `resolveSiteUrl` (`server/utils/b10cks.ts`) is the site origin for robots.txt,
+  the sitemap and llms.txt, and `server/plugins/site-config.ts` feeds it to nuxt-site-config,
+  so schema.org `@id`s and the canonical follow it too. Never set `site.url` in
+  nuxt.config.ts: it is baked in at build time, and a build without `NUXT_PUBLIC_APP_URL`
+  ships `localhost` into the structured data. Override at boot with `NUXT_PUBLIC_SITE_URL`.
+- **Fragments are noindex, not hidden.** A page at or below an `_` slug (`_drawers/<slug>`,
+  `_config`) renders `noindex, nofollow` (`isFragmentSlug`, `shared/utils/`) and stays out of
+  sitemap.xml and llms.txt. Never Disallow them in robots.txt: a crawler that may not fetch a URL
+  never sees its noindex and can index it bare. Never 404 or redirect them: the live preview
+  loads that route. `?drawer=` on a real page is not a fragment: no noindex, and the canonical
+  drops the param.
+- **Page-level noindex wins.** The catch-all page sets robots with `tagPriority: 'high'`, so it
+  beats the editor's `meta.robots`. Keep it that way for any new forced noindex.
+- **Languages follow `content.translations`.** `usePageAlternates(content, language)` in
+  `app/pages/[...slug].vue` is the one source for hreflang (complete, reciprocal, with
+  x-default), `<html lang>`, the WebPage `inLanguage` and the switcher map
+  (`usePageTranslations().translations`). Only published translations count. An untranslated
+  fallback renders `noindex, follow` with the default language's `lang`. Paths come from
+  `buildLocalizedPath`, which assumes i18n `strategy: 'prefix'` (like the sitemap), so hreflang
+  stays off unless the page's own URL is in the set. When you turn i18n on, pass the active
+  locale as `language` and as `language_iso` to `useContent`. `NUXT_PUBLIC_DEFAULT_LANGUAGE`
+  must match the space's default language.
+- **Exactly one h1.** Every block that renders a heading takes `isFirst` and renders `<h1>`
+  when it leads the page. A block that ignores it leaves the page without an h1 whenever an
+  editor puts it first.
+- **robots.txt on staging is `User-agent: *` + `Disallow: /` and nothing else.** A named group
+  overrides `*` for that crawler, so listing the AI crawlers there would let them straight in.
+- **One page list.** sitemap.xml and llms.txt both publish `fetchIndexablePages`
+  (`server/utils/sitemap.ts`).
+
 ## Type generation
 
 ```sh
