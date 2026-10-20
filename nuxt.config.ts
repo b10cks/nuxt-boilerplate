@@ -31,6 +31,9 @@ export default defineNuxtConfig({
     public: {
       appEnv: process.env.NUXT_PUBLIC_APP_ENV || 'production',
       siteUrl: process.env.NUXT_PUBLIC_APP_URL || '',
+      // The space's default content language. Every entry exists in it, and an
+      // untranslated page falls back to it (see usePageAlternates).
+      defaultLanguage: process.env.NUXT_PUBLIC_DEFAULT_LANGUAGE || 'en',
     },
   },
 
@@ -110,7 +113,7 @@ export default defineNuxtConfig({
     pageTransition: { name: 'page', mode: 'out-in' },
     head: {
       htmlAttrs: {
-        lang: 'en',
+        lang: process.env.NUXT_PUBLIC_DEFAULT_LANGUAGE || 'en',
         dir: 'ltr',
       },
       link: [
