@@ -149,9 +149,9 @@ export default defineNuxtConfig({
     },
   },
 
+  // url resolves per request (server/plugins/site-config.ts), not at build time.
   site: {
     name: '',
-    url: process.env.NUXT_PUBLIC_APP_URL,
   },
 
   schemaOrg: {},
