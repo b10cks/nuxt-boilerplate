@@ -2,8 +2,9 @@ import { filterSitemapEntries, renderSitemapXml } from '@b10cks/client'
 
 /**
  * Every published, indexable page. `filterSitemapEntries` drops `noindex`
- * entries and deduplicates by absolute URL; `renderSitemapXml` emits the
- * `<urlset>`.
+ * entries and deduplicates by absolute URL; fragments (`_config`, `_drawers/…`)
+ * are dropped too, because the page renders them noindex. `renderSitemapXml`
+ * emits the `<urlset>`.
  *
  * Note that URLs are prefixed with the entry's `language_iso` when the space
  * has one set, matching `strategy: 'prefix'`. Pass a `locale` to
@@ -18,7 +19,10 @@ export default defineEventHandler(async (event) => {
   const siteUrl = resolveSiteUrl(event)
 
   const entries = await api.getSitemap({}, { allPages: true })
-  const xml = renderSitemapXml(filterSitemapEntries(entries, { siteUrl }), siteUrl)
+  const pages = filterSitemapEntries(entries, { siteUrl }).filter(
+    (entry) => !isFragmentSlug(entry.full_slug)
+  )
+  const xml = renderSitemapXml(pages, siteUrl)
 
   setResponseHeader(event, 'content-type', 'application/xml; charset=utf-8')
   setResponseHeader(event, 'cache-control', 'max-age=180, s-maxage=86400, public')
