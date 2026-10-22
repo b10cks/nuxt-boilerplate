@@ -18,7 +18,7 @@ async function loadRedirects(event: H3Event): Promise<RedirectMap> {
   }
 
   const api = await createServerB10cksApi(event)
-  const map = await api.getRedirects({}, { allPages: true })
+  const map = collapseRedirects(await api.getRedirects({}, { allPages: true }))
   cache = { map, expiresAt: Date.now() + CACHE_TTL_MS }
 
   return map
