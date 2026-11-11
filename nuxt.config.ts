@@ -3,6 +3,32 @@ import { readFileSync, realpathSync, statSync } from 'node:fs'
 import tailwindcss from '@tailwindcss/vite'
 import svgLoader from 'vite-svg-loader'
 
+const isStaging = (process.env.NUXT_PUBLIC_APP_ENV || 'production') === 'staging'
+const isProduction = (process.env.NUXT_PUBLIC_APP_ENV || 'production') === 'production'
+
+const RESPONSE_HEADERS = {
+  // Content-Security-Policy is set in server/plugins/csp-nonce.ts, which can
+  // carry a per-request nonce.
+  //
+  // No includeSubDomains or preload by default: either forces HTTPS on every
+  // other host under the domain, and preload cannot be taken back quickly. Add
+  // them once you know every subdomain serves HTTPS.
+  'Strict-Transport-Security': 'max-age=63072000',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'geolocation=(), microphone=()',
+  // Staging stays out of every index, whatever an editor sets on a page. In
+  // production the page's own robots meta tag decides.
+  'X-Robots-Tag': isStaging ? 'noindex, nofollow, noarchive' : 'all',
+  // A CDN keeps a page fresh for an hour, then serves the cached copy for up
+  // to a day while it fetches a new one in the background, and keeps serving
+  // it if the origin fails.
+  ...(isProduction && {
+    'Cache-Control':
+      'max-age=180, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400, public',
+  }),
+}
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
 
@@ -87,32 +113,12 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '*': {
-      headers: {
-        // Content-Security-Policy is set in server/plugins/csp-nonce.ts, which
-        // can carry a per-request nonce.
-        'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
-        'X-Content-Type-Options': 'nosniff',
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy': 'geolocation=(), microphone=()',
-        'X-Robots-Tag':
-          (process.env.NUXT_PUBLIC_APP_ENV || 'production') === 'staging'
-            ? 'noindex, nofollow, noarchive'
-            : 'all',
-      },
-    },
-    '/': {
-      headers:
-        (process.env.NUXT_PUBLIC_APP_ENV || 'production') === 'production'
-          ? { 'Cache-Control': 'max-age=180, s-maxage=86400, public' }
-          : {},
-    },
-    '/**': {
-      headers:
-        (process.env.NUXT_PUBLIC_APP_ENV || 'production') === 'production'
-          ? { 'Cache-Control': 'max-age=180, s-maxage=86400, public' }
-          : {},
-    },
+    // Every response, pages and API alike. Both keys are needed: `/**` does
+    // not match the root, and `*` matches one path segment only, which leaves
+    // every page below the first level without these headers. A route that
+    // answers per visitor needs its own rule with `Cache-Control: no-store`.
+    '/': { headers: RESPONSE_HEADERS },
+    '/**': { headers: RESPONSE_HEADERS },
   },
 
   app: {
