@@ -8,6 +8,60 @@ const toggleMenu = () => {
   showMenu.value = !showMenu.value
 }
 
+const route = useRoute()
+const menu = useTemplateRef('menu')
+const closeButton = useTemplateRef('closeButton')
+
+// The element that opened the dialog gets focus back when it closes, unless
+// focus already left the dialog (a link click that navigates).
+let opener: HTMLElement | null = null
+
+watch(showMenu, (isOpen) => {
+  document.documentElement.classList.toggle('overflow-hidden', isOpen)
+  if (isOpen) {
+    opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    nextTick(() => closeButton.value?.focus())
+    return
+  }
+  if (menu.value?.contains(document.activeElement)) opener?.focus()
+  opener = null
+})
+
+watch(
+  () => route.fullPath,
+  () => (showMenu.value = false)
+)
+
+const onKeydown = (event: KeyboardEvent) => {
+  if (!showMenu.value) return
+  if (event.key === 'Escape') {
+    showMenu.value = false
+    return
+  }
+  // Keeps Tab focus inside the dialog while it is open.
+  if (event.key === 'Tab' && menu.value) {
+    const focusables = menu.value.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+    const first = focusables[0]
+    const last = focusables[focusables.length - 1]
+    if (!first || !last) return
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+}
+
+onMounted(() => document.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onKeydown)
+  document.documentElement.classList.remove('overflow-hidden')
+})
+
 const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value }))
 </script>
 
@@ -29,11 +83,11 @@ const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value
             class="h-12"
           />
         </NuxtLink>
-        <div
-          class="ml-auto flex items-center gap-6"
-          aria-label="Main navigation"
-        >
-          <nav class="hidden items-center gap-6 md:flex">
+        <div class="ml-auto flex items-center gap-6">
+          <nav
+            class="hidden items-center gap-6 md:flex"
+            aria-label="Main navigation"
+          >
             <B10cksComponent
               v-for="item in config.mainMenu"
               :key="item.id"
@@ -51,6 +105,7 @@ const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value
             type="button"
             aria-label="Toggle menu"
             aria-controls="main-menu"
+            :aria-expanded="showMenu"
             @click="toggleMenu"
           >
             <span class="sr-only">Menu</span>
@@ -92,6 +147,8 @@ const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value
   </header>
   <div
     id="main-menu"
+    ref="menu"
+    :inert="!showMenu"
     :class="[
       'pointer-events-auto fixed inset-0 z-50 backdrop-blur-sm',
       'transition-transform delay-0 duration-1000 ease-embellishment',
@@ -104,6 +161,7 @@ const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value
     <div :class="['menu theme-lighter absolute inset-0 flex flex-col']">
       <div class="pointer-events-none absolute inset-0 opacity-5" />
       <button
+        ref="closeButton"
         class="group absolute top-6 right-4 size-8 cursor-pointer md:top-10 md:right-20"
         type="button"
         aria-label="Toggle menu"
