@@ -71,6 +71,10 @@ export default defineNuxtConfig({
 
   image: {
     provider: 'ilum',
+    // @nuxt/image 2 dropped the `xs` screen and skips a `sizes` key it does not
+    // know, without a warning: `xs:100vw lg:50vw` then renders as `50vw` and a
+    // phone gets the half-width file. This puts it back.
+    screens: { xs: 320 },
     providers: {
       ilum: {
         name: 'ilum',
@@ -119,10 +123,11 @@ export default defineNuxtConfig({
         dir: 'ltr',
       },
       link: [
+        // The image CDN. No `crossorigin`: images are fetched without CORS, and
+        // a CORS preconnect opens a connection they cannot use.
         {
           rel: 'preconnect',
           href: 'https://api.b10cks.com',
-          crossorigin: '',
         },
         // {
         //   rel: 'apple-touch-icon',
