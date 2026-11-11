@@ -77,10 +77,13 @@ The `ilum` provider (`app/utils/providers/ilum.ts`) is the default and reads
 
 Content slugs starting with an underscore are machinery, not pages:
 
-- `_config` — the site-wide config entry. The default layout calls `provideB10cksConfig()` once;
-  components read it with `useB10cksSiteConfig()`. Never fetch it a second time:
-  `useB10cksConfig` keys its `useAsyncData` off its params, so two callers with different params
-  race and one silently gets the other's language.
+- `_config` — the site-wide config entry. The default layout calls `fetchB10cksConfig()` once and
+  provides the result under `siteConfigKey`; components read it with `useB10cksSiteConfig()`. Keep
+  that `provide` in the layout's `<script setup>`: `<script setup>` restores the component
+  instance after its own awaits, but not after an await hidden inside a helper, and a `provide()`
+  behind one is silently dropped. Never fetch the config a second time: `useB10cksConfig` keys its
+  `useAsyncData` off its params, so two callers with different params race and one silently gets
+  the other's language.
 - `_error` — the 404 / error page content.
 - `_llms` — plain-text site summary, served by `server/routes/llms.txt.ts`.
 - `_drawers/<slug>` — overlay content opened via `?drawer=<slug>` instead of a route change.

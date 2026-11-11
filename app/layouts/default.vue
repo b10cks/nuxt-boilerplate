@@ -1,5 +1,5 @@
 <script setup lang="ts">
-await provideB10cksConfig()
+provide(siteConfigKey, await fetchB10cksConfig())
 </script>
 
 <template>
