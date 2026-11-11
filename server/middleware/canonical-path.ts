@@ -1,7 +1,8 @@
 /**
- * 301s every page URL to its one canonical form: lowercase, no trailing slash.
- * b10cks slugs are always lowercase, so `/About/` is only ever a duplicate of
- * `/about`. Both fixes land in a single hop, and the query string survives.
+ * 301s every page URL to its one canonical form: lowercase, single slashes, no
+ * trailing slash. b10cks slugs are always lowercase, so `/About/` is only ever
+ * a duplicate of `/about`, and so is `//about`. All fixes land in a single hop,
+ * and the query string survives.
  *
  * Runs before `redirects.ts` (nitro orders middleware by filename), so CMS
  * redirects only ever see the canonical path. Static hosting (`nuxt generate`)
@@ -9,7 +10,9 @@
  */
 export default defineEventHandler((event) => {
   const url = getRequestURL(event)
-  const path = url.pathname
+  // The raw path: `getRequestURL` already collapses leading slashes, which
+  // would hide `//about` from the comparison below.
+  const path = event.path.split('?', 1)[0] || '/'
 
   // Same exclusions as redirects.ts: assets, API and Nuxt internals are no
   // pages, and preview must never redirect.
@@ -31,6 +34,7 @@ export default defineEventHandler((event) => {
       .replace(/%[0-9A-Fa-f]{2}|[A-Z]+/g, (match) =>
         match.startsWith('%') ? match : match.toLowerCase()
       )
+      .replace(/\/{2,}/g, '/')
       .replace(/\/+$/, '') || '/'
 
   if (canonical !== path) {
