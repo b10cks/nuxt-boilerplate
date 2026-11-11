@@ -113,6 +113,84 @@ from the page they are editing. Both redirect layers already do
 If you put a CDN in front of this app, `b10cks_rv` and `b10cks_vid` must be in its cache key.
 See README.md.
 
+## Referenced entries in other languages
+
+Every translation of an entry is its own row with its own id. A reference field and `link.content`
+hold the id of the default-language row. Query referenced entries with the `canonical_id` filter,
+never `id`: `id` finds nothing outside the default language, and the section renders empty on
+every translated page. `parent_id` is the exception. Within a language a child points at that
+language's own row of its parent, so query children with the served page's own `id`.
+
+## Error page
+
+`app/error.vue` renders the editors' `_error` entry for a 4xx, inside the normal layout. A 5xx, or
+a b10cks that cannot deliver `_error`, gets the hardcoded copy in that file: an outage takes
+content and translations down together.
+
+- The status code stays and the page is `noindex, nofollow`. Never publish a regular page as the
+  404: a `/404` page answers 200 and gets indexed.
+- Never show `error.message` outside dev. A failed API request carries its URL with the access
+  token.
+- Throw page errors through `fail()` in `app/pages/[...slug].vue`.
+
+## Response headers and caching
+
+- Headers for every response live in `RESPONSE_HEADERS` (nuxt.config.ts), on the rules `/` and
+  `/**`. A rule keyed `*` matches one path segment only, so `/about/team` would lose the staging
+  `X-Robots-Tag` and the security headers.
+- Pages are public and cached: fresh for an hour at the CDN, then served stale for up to a day
+  while a new copy is fetched. A route that answers per visitor (geo lookup, form submit, signed
+  URL) needs its own rule with `Cache-Control: no-store`, or one visitor's answer is served to the
+  next.
+- A query parameter that changes the HTML must be in the CDN cache key: `b10cks_rv`, `b10cks_vid`,
+  `drawer`, and every one you add. Read it reactively from `useRoute().query`.
+- Personal data from the query (a booking or account token) is read in the browser only, inside
+  `<ClientOnly>`, and stays out of the cache key. The cached HTML never carries one visitor's
+  token.
+- `navigateTo` ignores `statusCode`. Pass `redirectCode`.
+
+## Mobile overflow
+
+A phone must never scroll sideways. The common cause is a grid without a base column count: its
+implicit column grows to the widest child (a long file name, a URL), so a single-column mobile
+grid ends up wider than the screen. Give every grid `grid-cols-1` next to its `md:` and `lg:`
+columns.
+
+The layout wrapper carries `overflow-x-clip` as a safety net. It hides the symptom only, so check
+for overflow with that class removed, at 390px, on every page type. Already guarded in `main.css`:
+headings break a word wider than the line, and `.prose` links break anywhere. A non-breaking space
+in CMS text glues two words into one unbreakable word. Fix that in the content.
+
+## Accessibility
+
+- Text needs 4.5:1 contrast against its background, muted text and badge labels included. Check
+  every theme a token is used in.
+- A link or button needs a 24px touch target, also inline phone and mail links in a card.
+- `aria-label` only works on an element with a role: a landmark, a control, or an explicit
+  `role`. On a plain `<div>` it is ignored.
+- Children of a list are list items. A block rendered into a `<ul>` gets wrapped in `<li>`, and
+  nothing inside a button claims `role="listitem"`.
+- An overlay that stays in the DOM while closed is `inert`. Opening moves focus into it, Tab stays
+  inside, Escape closes, and closing hands focus back to the element that opened it. The mobile
+  menu in `AppHeader.vue` shows the pattern.
+
+## Scroll animations
+
+A block that animates in uses `useOnceVisible()`: bind `elRef` to the section and add the hidden
+classes while `isVisible` is false. Use `motion-safe:` for every part of it.
+
+```vue
+<section
+  ref="elRef"
+  class="motion-safe:transition motion-safe:duration-700"
+  :class="!isVisible && 'motion-safe:translate-y-6 motion-safe:opacity-0'"
+>
+```
+
+For staggered children put the same classes on each child with
+`:style="{ transitionDelay: `${i * 80}ms` }"`. Never animate with `v-if`: the content has to be in
+the server HTML.
+
 ## Props types
 
 A props type that extends an imported type must import it by relative path:
@@ -170,6 +248,10 @@ blocks.
     bodies.
   - When you turn i18n on, load the page once and check the Network tab: the browser must not
     request the `translations` datasource again after SSR.
+- **Preload the one font every page uses.** Import the file with `?url` in `app/app.vue` and add a
+  `preload` link with `as: 'font'` and `crossorigin`. Give it a metric-matched fallback: an
+  `@font-face` over `local('Arial')` with `size-adjust` and ascent and descent overrides, next in
+  the font stack. Without it paragraphs reflow by two to three lines when the web font swaps in.
 - **Third-party scripts load after the page.** The boilerplate ships none. When you add GTM or a
   CMP, keep the consent defaults as an inline script in the head and request the container on the
   window `load` event. Events pushed before that wait in `dataLayer`. Inline scripts in the server
@@ -196,7 +278,8 @@ blocks.
 
 Every page has one URL, one language and one h1. The rules that keep it that way:
 
-- **One URL form.** Lowercase, no trailing slash (the root keeps its `/`), no query string.
+- **One URL form.** Lowercase, single slashes, no trailing slash (the root keeps its `/`), no
+  query string.
   `server/middleware/canonical-path.ts` 301s `/About/` to `/about` in one hop.
   `useB10cksSeo` emits the canonical link and `og:url` in that form, built with `siteUrl()`
   (`shared/utils/siteUrl.ts`) like every other absolute URL, so canonical, hreflang and the
@@ -231,6 +314,9 @@ Every page has one URL, one language and one h1. The rules that keep it that way
   overrides `*` for that crawler, so listing the AI crawlers there would let them straight in.
 - **One page list.** sitemap.xml and llms.txt both publish `fetchIndexablePages`
   (`server/utils/sitemap.ts`).
+- **Collapsed content stays in the HTML.** Accordion answers, tab panels and closed menu panels
+  render on the server and collapse with `v-show` or CSS. Behind `v-if` a crawler sees neither the
+  text nor the links.
 
 ## Type generation
 
