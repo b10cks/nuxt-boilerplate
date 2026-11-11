@@ -9,7 +9,9 @@ import { useRuntimeConfig } from '#imports'
  * Wire it up in the `i18n` block of nuxt.config.ts, e.g.
  * `locales: [{ code: 'en', language: 'en-US', name: 'English', file: 'en.ts' }]`
  * with `i18n/locales/en.ts` doing
- * `export default defineI18nLocale(() => fetchLocale('en'))`.
+ * `export default async () => fetchLocale('en')`. Keep that a plain arrow
+ * function: wrapped in `defineI18nLocale` the default export is a call
+ * expression, which the i18n resource plugin under Vite 8 rejects.
  *
  * The base locale's strings are the stored `value`; every other locale is a
  * dimension on top of it, so b10cks falls back to the base for keys a locale

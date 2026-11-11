@@ -77,9 +77,13 @@ export default defineNuxtConfig({
 
   // Uncomment to enable i18n. Messages come from the b10cks `translations`
   // datasource: have each `i18n/locales/<code>.ts` do
-  // `export default defineI18nLocale(() => fetchLocale('<code>'))`
-  // with `fetchLocale` from `i18n/fetchLocale.ts`. Also uncomment
-  // '@nuxtjs/i18n' in `modules` and add it as a dependency.
+  // `export default async () => fetchLocale('<code>')`
+  // with `fetchLocale` from `i18n/fetchLocale.ts`. Keep that default export a
+  // plain arrow function: under Vite 8 the i18n resource plugin only accepts a
+  // function or an object literal there, and a `defineI18nLocale(...)` call
+  // makes SSR message loading fail. Also uncomment '@nuxtjs/i18n' in `modules`
+  // and add it as a dependency. Never call `useI18n()` in a route middleware
+  // (it needs setup context): use `useNuxtApp().$i18n` there.
   /*
     i18n: {
       baseUrl: process.env.NUXT_PUBLIC_APP_URL || '',
