@@ -110,6 +110,15 @@ from the page they are editing. Both redirect layers already do
 If you put a CDN in front of this app, `b10cks_rv` and `b10cks_vid` must be in its cache key.
 See README.md.
 
+## Props types
+
+A props type that extends an imported type must import it by relative path:
+`import type { B10cksAsset } from '../b10cks/types'`, then
+`interface Props extends B10cksAsset`. Through `~/` the build fails with "Failed to resolve extends
+base type". The Vue compiler has to read that file, and TypeScript 7 no longer ships the API it
+resolves aliases with (`vite.vue.script.fs` in nuxt.config.ts covers the file access). An imported
+type used for a single prop, `defineProps<{ block: B10cksHero }>()`, is not affected.
+
 ## Page performance
 
 On a throttled phone the first paint depends on what shares the connection with the HTML. These
