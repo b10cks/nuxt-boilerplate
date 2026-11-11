@@ -163,6 +163,13 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  features: {
+    // All CSS goes into the HTML. The default inlines component styles only
+    // and links main.css from the head, where it blocks the first paint for a
+    // round trip. See app/plugins/deferred-styles.server.ts for the rest.
+    inlineStyles: true,
+  },
+
   router: {
     options: {
       scrollBehaviorType: 'smooth',
