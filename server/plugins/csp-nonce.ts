@@ -14,6 +14,9 @@ export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('render:html', (html, { event }) => {
     const nonce = randomBytes(16).toString('base64url')
 
+    // Before the nonce pass: it adds an inline script of its own.
+    deferScriptPreloads(html)
+
     const addNonce = (chunk: string) => chunk.replaceAll('<script', `<script nonce="${nonce}"`)
     html.head = html.head.map(addNonce)
     html.bodyPrepend = html.bodyPrepend.map(addNonce)
