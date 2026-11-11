@@ -27,6 +27,6 @@ function toQueryString(query: LocationQuery): string {
 export default defineNuxtRouteMiddleware((to) => {
   if (staticRedirects[to.path] && !to.query.b10cks_vid) {
     const target = staticRedirects[to.path]
-    return navigateTo(target + toQueryString(to.query))
+    return navigateTo(target + toQueryString(to.query) + to.hash, { redirectCode: 301 })
   }
 })

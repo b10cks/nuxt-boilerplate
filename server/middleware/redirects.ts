@@ -51,7 +51,11 @@ export default defineEventHandler(async (event) => {
   try {
     const redirect = (await loadRedirects(event))[path]
     if (redirect) {
-      return sendRedirect(event, redirect.target, redirect.status_code || 301)
+      // The query string travels along (campaign parameters, `?drawer=`).
+      const query = url.search.slice(1)
+      const separator = redirect.target.includes('?') ? '&' : '?'
+      const target = query ? `${redirect.target}${separator}${query}` : redirect.target
+      return sendRedirect(event, target, redirect.status_code || 301)
     }
   } catch {
     // A redirect lookup failure must not take the page down.
