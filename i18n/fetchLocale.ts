@@ -25,6 +25,11 @@ const BASE_LOCALE = 'en'
  */
 const PER_PAGE = 1000
 
+/** Keeps a dictionary across renders without outliving an edit in b10cks for long. */
+const CACHE_TTL_MS = 5 * 60 * 1000
+
+const cache = new Map<string, { at: number; messages: Record<string, unknown> }>()
+
 /** A vue-i18n linked reference: `@:key` or a modified `@.lower:key`. */
 const LINKED_REF = /^(?::|\.[a-z]+:)/i
 
@@ -63,7 +68,17 @@ function unflatten(entries: IBDataEntry[]): Record<string, unknown> {
   return root
 }
 
+/**
+ * Cached per server instance for five minutes. Without it every page render
+ * fetches the whole dictionary, and a crawl burst sends one API request per
+ * page.
+ */
 export async function fetchLocale(locale: string): Promise<Record<string, unknown>> {
+  const cached = cache.get(locale)
+  if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
+    return cached.messages
+  }
+
   const { b10cks } = useRuntimeConfig().public
 
   try {
@@ -82,10 +97,13 @@ export async function fetchLocale(locale: string): Promise<Record<string, unknow
       ...(locale === BASE_LOCALE ? {} : { dimension: locale }),
     })
 
-    return unflatten(entries)
+    const messages = unflatten(entries)
+    cache.set(locale, { at: Date.now(), messages })
+    return messages
   } catch (error) {
-    // A dictionary outage must degrade to raw keys, not to a 500.
+    // A dictionary outage must degrade to the last known strings, or to raw
+    // keys, not to a 500.
     console.error(`[i18n] failed to load '${locale}' translations from b10cks`, error)
-    return {}
+    return cached?.messages ?? {}
   }
 }
