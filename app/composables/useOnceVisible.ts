@@ -17,7 +17,9 @@ export function useOnceVisible(options?: IntersectionObserverInit) {
           observer = null
         }
       },
-      { threshold: 0.15, rootMargin: '0px 0px 0px 0px', ...options }
+      // A line 10% above the viewport bottom, not an area ratio: a ratio fires
+      // late on tall sections and never on very tall ones.
+      { threshold: 0, rootMargin: '0px 0px -10% 0px', ...options }
     )
     observer.observe(el)
   }
