@@ -75,14 +75,24 @@ if (import.meta.server && props.loading === 'eager') {
   })
 }
 
+// The focus drives the crop gravity in the URL. The same point steers CSS
+// `object-cover`, which re-crops whenever the box differs from the requested
+// ratio. Without a point the browser default (centre) stays.
+const objectPosition = computed(() => {
+  const point = typeof props.gravity === 'object' ? props.gravity : props.data?.focus
+  if (!point || typeof point !== 'object' || !('x' in point) || !('y' in point)) return undefined
+  return typeof point.x === 'number' && typeof point.y === 'number'
+    ? `${point.x}% ${point.y}%`
+    : undefined
+})
+
 // Intrinsic dimensions reserve the right box before the image arrives, so the
 // layout does not shift. The dominant color fills that box in the meantime, and
 // is dropped on load so transparent images do not keep the tint.
-const placeholderStyle = computed(() =>
-  !loaded.value && props.metadata?.dominant_color
-    ? { backgroundColor: props.metadata.dominant_color }
-    : undefined
-)
+const imgStyle = computed(() => ({
+  objectPosition: objectPosition.value,
+  backgroundColor: loaded.value ? undefined : props.metadata?.dominant_color,
+}))
 </script>
 
 <template>
@@ -94,7 +104,7 @@ const placeholderStyle = computed(() =>
     :sizes="sizes"
     :loading="loading"
     :fetchpriority="loading === 'eager' ? 'high' : undefined"
-    :style="placeholderStyle"
+    :style="imgStyle"
     :modifiers="modifiers"
     @load="loaded = true"
   />
