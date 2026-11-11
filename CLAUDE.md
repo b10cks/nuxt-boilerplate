@@ -151,7 +151,8 @@ blocks.
   `__NUXT_DATA__` on every page.
   - Redirects are resolved in `server/middleware/redirects.ts` only. Never call `useRedirects` in
     the app: 710 redirects added 50 KB to each page. A client-side navigation to a redirected path
-    finds no entry, and `app/pages/[...slug].vue` reloads it from the server.
+    finds no entry, and `app/pages/[...slug].vue` reloads it from the server. Throw page errors
+    through its `fail()`, which keeps that reload and makes the error fatal in the browser.
   - A block that lists other entries (teasers, related articles) maps them down to the card fields
     in the `transform` option of `useContents`. Without it six cards shipped 95 KB of article
     bodies.

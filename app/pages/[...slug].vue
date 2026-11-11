@@ -9,25 +9,38 @@ const version = useB10cksVersion()
 const { useContent } = useB10cksApi()
 const { data: content, error } = await useContent(slug, { vid: version.value })
 
-// Only the server knows the CMS redirects (server/middleware/redirects.ts), so
-// a client-side navigation that finds no entry is loaded from the server: the
-// visitor gets the redirect if there is one, else the error page with a real
-// 404 status.
-const notFound = error.value
-  ? 'statusCode' in error.value && error.value.statusCode === 404
-  : !content.value
-if (notFound && import.meta.client && !useNuxtApp().isHydrating) {
-  window.location.replace(route.fullPath)
-  // Holds the navigation until the browser has left the page.
-  await new Promise(() => {})
+/**
+ * Every error thrown from here is `fatal` in the browser: on a client-side
+ * navigation a non-fatal one is swallowed and the visitor is left with a blank
+ * page under the new URL.
+ *
+ * A 404 on a client-side navigation is loaded from the server instead, because
+ * only the server knows the CMS redirects (server/middleware/redirects.ts): the
+ * visitor gets the redirect if there is one, else the error page with a real
+ * 404 status.
+ *
+ * On the server `fatal` changes nothing about the response, it only makes
+ * nitro log the error with its stack trace. A 4xx is an expected answer
+ * (scanner probes, stale links), so only a 5xx is logged.
+ */
+async function fail(error: { statusCode: number; statusMessage: string }): Promise<never> {
+  if (import.meta.client && error.statusCode === 404 && !useNuxtApp().isHydrating) {
+    window.location.replace(route.fullPath)
+    // Holds the navigation until the browser has left the page.
+    await new Promise(() => {})
+  }
+  throw createError({ ...error, fatal: import.meta.client || error.statusCode >= 500 })
 }
 
 if (error.value) {
-  throw error.value
+  const { statusCode = 500, statusMessage = error.value.message } = isNuxtError(error.value)
+    ? error.value
+    : {}
+  await fail({ statusCode, statusMessage })
 }
 
 if (!content.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Not Found', fatal: true })
+  await fail({ statusCode: 404, statusMessage: 'Not Found' })
 }
 
 // Live-updates while editing in the b10cks editor; outside preview mode it
