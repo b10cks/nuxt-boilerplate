@@ -1,3 +1,5 @@
+import { readFileSync, realpathSync, statSync } from 'node:fs'
+
 import tailwindcss from '@tailwindcss/vite'
 import svgLoader from 'vite-svg-loader'
 
@@ -168,6 +170,20 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    vue: {
+      script: {
+        // `defineProps<Props>()` with `Props` extending an imported type makes
+        // the Vue compiler read that type's file. It takes its file access
+        // from the TypeScript JS API, which TypeScript 7 no longer ships, so
+        // it gets one here. Module resolution is still missing: import such a
+        // type by relative path, not through `~/` (see B10cksImg.vue).
+        fs: {
+          fileExists: (file) => statSync(file, { throwIfNoEntry: false })?.isFile() ?? false,
+          readFile: (file) => readFileSync(file, 'utf8'),
+          realpath: realpathSync,
+        },
+      },
+    },
     plugins: [
       svgLoader({
         svgoConfig: {
