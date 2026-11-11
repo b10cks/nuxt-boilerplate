@@ -110,6 +110,75 @@ from the page they are editing. Both redirect layers already do
 If you put a CDN in front of this app, `b10cks_rv` and `b10cks_vid` must be in its cache key.
 See README.md.
 
+## Page performance
+
+On a throttled phone the first paint depends on what shares the connection with the HTML. These
+rules come from measured Core Web Vitals fixes. The defaults are built in; keep them when you add
+blocks.
+
+- **No stylesheet in the head.** `features.inlineStyles: true` puts all CSS into the HTML, and
+  `app/plugins/deferred-styles.server.ts` moves any stylesheet Nuxt still links to the end of the
+  body. A linked 19 KB `entry.css` cost 4 s of FCP. Never add a `<link rel="stylesheet">` to the
+  head, for fonts either: self-host them through `main.css`.
+- **One opening image per page.** The first image of the first block gets
+  `:loading="isFirst ? 'eager' : 'lazy'"`. `eager` on `B10cksImg` means "the image this page opens
+  with": it adds `fetchpriority="high"` and a preload link with the same srcset as the `<img>`.
+  Everything else stays `lazy`, the default. Never set `eager` below the first screen, and never
+  use NuxtImg's own `preload`: it drops the srcset, so the browser downloads a second file.
+  `format`, `quality` or `densities` passed to `B10cksImg` reach the `<img>` but not the preload
+  link, with the same result. Set them in the `image` config instead.
+- **Script preloads wait for that image.** `deferScriptPreloads` (`server/utils/scriptPreloads.ts`,
+  called from `server/plugins/csp-nonce.ts`) takes the `modulepreload` links out of the head. An
+  inline script adds them back at low priority once `img[fetchpriority="high"]` has loaded, or
+  right away on a page without one. It must run before the nonce pass.
+- **`sizes` keys are `xs`, `sm`, `md`, `lg`, `xl`, `2xl`.** @nuxt/image skips an unknown key
+  without a warning (`xxl`, or `xs` without the screen added in nuxt.config.ts). If no key is
+  left, the image renders without `src`. A value applies from its breakpoint up to the next key:
+  `xs:100vw lg:50vw` is 100vw below 1024px and 50vw above. Declare what the layout renders. A card
+  declared at 280px and rendered at 180px downloads a file twice as large as needed.
+- **Videos load on approach.** Use `<B10cksVideo v-bind="block.video" />` for a video that plays
+  by itself. It renders `preload="none"` without a source, then attaches the source and plays once
+  the window `load` event has fired and the video is within half a viewport. Never server-render
+  `<video autoplay>` with a source: the file downloads with the page, also below the first screen.
+  For the poster, put a `<B10cksImg>` behind the video and position the video over it
+  (`absolute inset-0 size-full object-cover`). The image then follows the rules above, which a
+  `poster` attribute cannot: no srcset, no preload.
+- **Nothing enters the page flow after the first paint.** Geo hints, consent and announcement
+  bars, and `<ClientOnly>` content without reserved space push `<main>` down when they arrive (a
+  country strip in the header measured CLS 0.118). Lay them over the page (`fixed` or `absolute`)
+  or reserve their height in the server HTML.
+- **Keep the payload small.** Everything `useAsyncData` returns on the server ships in
+  `__NUXT_DATA__` on every page.
+  - Redirects are resolved in `server/middleware/redirects.ts` only. Never call `useRedirects` in
+    the app: 710 redirects added 50 KB to each page. A client-side navigation to a redirected path
+    finds no entry, and `app/pages/[...slug].vue` reloads it from the server.
+  - A block that lists other entries (teasers, related articles) maps them down to the card fields
+    in the `transform` option of `useContents`. Without it six cards shipped 95 KB of article
+    bodies.
+  - When you turn i18n on, load the page once and check the Network tab: the browser must not
+    request the `translations` datasource again after SSR.
+- **Third-party scripts load after the page.** The boilerplate ships none. When you add GTM or a
+  CMP, keep the consent defaults as an inline script in the head and request the container on the
+  window `load` event. Events pushed before that wait in `dataLayer`. Inline scripts in the server
+  HTML get the CSP nonce from `csp-nonce.ts`. A script element created at runtime does not: copy
+  `document.currentScript.nonce` onto it, and add its hosts to the CSP.
+- **Head links go in `app.head.link`.** Nuxt ignores `app.link` without a warning. A preconnect
+  for the image host takes no `crossorigin`: images are fetched without CORS and cannot use a CORS
+  connection.
+- **Lazy hydration of below-fold blocks is not built in.** It cut 26 chunks on the measured site
+  but did not improve TBT, and it relies on Nuxt internals. Measure before you add it.
+
+### Measuring
+
+- Use Lighthouse with applied throttling (`--throttling-method=devtools`) on a local production
+  build, at least two runs, and compare before and after on the same setup. PageSpeed Insights
+  simulates throttling and reports an LCP of 3 to 4 s where applied throttling measures 1.3 s.
+- On a deployed site, skip the first request after a deploy or cache purge. It includes the cold
+  start.
+- Check the server HTML too: no stylesheet link in the head, the preload link names the same
+  candidates as the opening `<img>`, no `modulepreload` in the head, and no redirect list in
+  `__NUXT_DATA__`.
+
 ## SEO
 
 Every page has one URL, one language and one h1. The rules that keep it that way:
