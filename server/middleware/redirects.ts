@@ -5,8 +5,11 @@ import type { H3Event } from 'h3'
  * CMS redirects, applied on the server so the first hit gets a real, cacheable
  * 301 instead of a client-side navigation after the page has already rendered.
  *
- * `app/middleware/redirects.global.ts` stays: it catches in-app navigations,
- * which never reach nitro, and holds the static redirect map.
+ * This is the only place that knows the list. The app must not fetch it:
+ * `useRedirects` in a route middleware or component puts every redirect of the
+ * space into each page's payload. An in-app navigation to a redirected path
+ * ends in a 404, which `app/pages/[...slug].vue` reloads from here.
+ * `app/middleware/redirects.global.ts` holds the static redirect map.
  */
 const CACHE_TTL_MS = 5 * 60 * 1000
 

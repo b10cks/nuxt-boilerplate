@@ -9,6 +9,19 @@ const version = useB10cksVersion()
 const { useContent } = useB10cksApi()
 const { data: content, error } = await useContent(slug, { vid: version.value })
 
+// Only the server knows the CMS redirects (server/middleware/redirects.ts), so
+// a client-side navigation that finds no entry is loaded from the server: the
+// visitor gets the redirect if there is one, else the error page with a real
+// 404 status.
+const notFound = error.value
+  ? 'statusCode' in error.value && error.value.statusCode === 404
+  : !content.value
+if (notFound && import.meta.client && !useNuxtApp().isHydrating) {
+  window.location.replace(route.fullPath)
+  // Holds the navigation until the browser has left the page.
+  await new Promise(() => {})
+}
+
 if (error.value) {
   throw error.value
 }

@@ -17,19 +17,16 @@ function toQueryString(query: LocationQuery): string {
   return queryString ? `?${queryString}` : ''
 }
 
-export default defineNuxtRouteMiddleware(async (to) => {
-  const { useRedirects } = useB10cksApi()
-  const { data: redirects } = await useRedirects()
-
+/**
+ * Static redirects only. The b10cks redirects are resolved by
+ * `server/middleware/redirects.ts`: fetching the list here as well puts every
+ * redirect of the space into each page's payload. A client-side navigation to
+ * a redirected path ends in a 404, which `app/pages/[...slug].vue` reloads
+ * from the server.
+ */
+export default defineNuxtRouteMiddleware((to) => {
   if (staticRedirects[to.path] && !to.query.b10cks_vid) {
     const target = staticRedirects[to.path]
     return navigateTo(target + toQueryString(to.query))
-  }
-
-  const redirect = redirects.value && redirects.value[to.path]
-  if (redirect && !to.query.b10cks_vid) {
-    return navigateTo(redirect.target + toQueryString(to.query), {
-      redirectCode: redirect.status_code,
-    })
   }
 })
