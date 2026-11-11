@@ -9,5 +9,5 @@
   "singleQuote": true,
   "objectWrap": "preserve",
   "trailingComma": "es5",
-  "ignorePatterns": []
+  "ignorePatterns": ["app/b10cks/types/generated.d.ts"]
 }
