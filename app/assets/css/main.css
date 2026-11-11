@@ -92,6 +92,18 @@
     @apply border-border outline-ring/50;
   }
 
+  /* A word wider than the line (a long compound at heading size on a phone)
+     breaks instead of pushing the page sideways. Only such words are affected;
+     editors place `&shy;` where a hyphen reads better. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply wrap-break-word;
+  }
+
   .grid-area-stack {
     grid-area: 1/1;
   }
@@ -133,8 +145,10 @@
 
 @layer components {
   .prose {
+    /* Raw URLs as link text (privacy policy, imprint) may break anywhere,
+       otherwise one long address pushes the page sideways on phones. */
     a {
-      @apply underline underline-offset-2 transition-colors duration-200;
+      @apply wrap-anywhere underline underline-offset-2 transition-colors duration-200;
       &:hover {
         @apply text-primary;
       }
