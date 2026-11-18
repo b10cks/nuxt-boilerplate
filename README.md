@@ -106,9 +106,9 @@ yarn preview
 
 ## Deploying behind a CDN
 
-Any CDN in front of this app **must** include `b10cks_rv`, `b10cks_vid` and `drawer` in its cache key.
+Any CDN in front of this app **must** include `b10cks_rv` and `b10cks_vid` in its cache key.
 
-`b10cks_rv` and `b10cks_vid` are the two query params the b10cks editor uses to request a specific revision and a specific version. A CDN that strips them from the cache key answers a preview request with the cached published page, so editors see stale content and cannot tell why. This is the easiest way to break preview in production. `drawer` opens overlay content on the current page, so it changes the HTML too. The same goes for every query param you add that the server renders from.
+`b10cks_rv` and `b10cks_vid` are the two query params the b10cks editor uses to request a specific revision and a specific version. A CDN that strips them from the cache key answers a preview request with the cached published page, so editors see stale content and cannot tell why. This is the easiest way to break preview in production. The same goes for every query param you add that the server renders from. `drawer` can stay out: the overlay renders in the browser, so every drawer URL shares the page's cached HTML.
 
 On CloudFront, add them to the cache policy's query string allowlist. On Cloudflare, add them to the Cache Key query string include list.
 

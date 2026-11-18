@@ -107,7 +107,9 @@ Content slugs starting with an underscore are machinery, not pages:
 - `_error` — the 404 / error page content.
 - `_llms` — plain-text site summary, served by `server/routes/llms.txt.ts`.
 - `_drawers/<slug>` — overlay content opened via `?drawer=<slug>` instead of a route change.
-  `useB10cksLink` produces those links.
+  `useB10cksLink` produces those links and `DrawerHost.vue` renders them in the browser only. Each
+  space needs a `drawer` block with a `header` text field and a `body` block list. The close,
+  loading and error text in `DrawerHost.vue` is English while i18n is off.
 
 ## Two traps with globally registered blocks
 
@@ -188,7 +190,8 @@ route during its transition, so it reads its own data from what it fetched.
   stdout. Rate limit by `rateLimitAddress(event)`: the visitor controls the first
   `X-Forwarded-For` value.
 - A query parameter that changes the HTML must be in the CDN cache key: `b10cks_rv`, `b10cks_vid`,
-  `drawer`, and every one you add. Read it reactively from `useRoute().query`.
+  and every one you add. Read it reactively from `useRoute().query`. `drawer` is not one of them:
+  the overlay renders in the browser.
 - Personal data from the query (a booking or account token) is read in the browser only, inside
   `<ClientOnly>`, and stays out of the cache key. The cached HTML never carries one visitor's
   token.
@@ -414,8 +417,9 @@ in nuxt.config.ts. Messages come from the b10cks `translations` datasource via
 
 Never hardcode a translation string. Create the key in b10cks and read it with `$t()`.
 
-The accessible labels in `AppHeader.vue` are English while i18n is off. Move them to `$t()` when you
-turn it on.
+The accessible labels in `AppHeader.vue` and the text in `DrawerHost.vue` are English while i18n is
+off. Move them to `$t()` when you turn it on, and pass the active locale as `language_iso` to the
+drawer request.
 
 An optional translatable field left empty in a translation shows the default-language value
 (`i18n_mode: overlay`). A language cannot switch a value off by leaving it blank.

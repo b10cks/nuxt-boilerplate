@@ -1,4 +1,4 @@
-import type { B10cksAsset, B10cksConfig as GeneratedConfig } from './generated'
+import type { B10cksAsset, B10cksConfig as GeneratedConfig, B10cksItem } from './generated'
 
 export * from './generated'
 
@@ -16,4 +16,13 @@ export interface B10cksConfig extends GeneratedConfig {
   zip?: string
   city?: string
   country?: string
+}
+
+/**
+ * The `drawer` block. Delete this once the block exists in your space and
+ * `bun run types:b10cks` generates it.
+ */
+export interface B10cksDrawer extends B10cksItem {
+  header?: string
+  body?: B10cksItem[]
 }

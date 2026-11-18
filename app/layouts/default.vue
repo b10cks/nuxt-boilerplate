@@ -1,4 +1,13 @@
 <script setup lang="ts">
+const route = useRoute()
+
+// The dialog code loads with the first drawer and stays mounted afterwards, so
+// closing can animate.
+const drawerRequested = ref(false)
+watchEffect(() => {
+  if (route.query.drawer) drawerRequested.value = true
+})
+
 const config = await fetchB10cksConfig()
 provide(siteConfigKey, config)
 useSiteSchema(config)
@@ -13,5 +22,8 @@ useSiteSchema(config)
     <AppHeader />
     <slot />
     <AppFooter class="mt-auto" />
+    <ClientOnly>
+      <LazyDrawerHost v-if="drawerRequested" />
+    </ClientOnly>
   </div>
 </template>
