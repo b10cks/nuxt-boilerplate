@@ -1,5 +1,7 @@
 <script setup lang="ts">
-provide(siteConfigKey, await fetchB10cksConfig())
+const config = await fetchB10cksConfig()
+provide(siteConfigKey, config)
+useSiteSchema(config)
 
 // The wrapper's `overflow-x-clip` is a safety net against sideways scrolling on
 // phones. Unlike `hidden` it creates no scroll container, so sticky elements

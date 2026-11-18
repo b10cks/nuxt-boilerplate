@@ -48,6 +48,8 @@ if (!content.value || content.value.block === 'folder') {
   await fail({ statusCode: 404, statusMessage: 'Not Found' })
 }
 
+usePageCacheControl(content.value)
+
 // Live-updates while editing in the b10cks editor; outside preview mode it
 // simply tracks the fetched entry.
 const block = usePreviewContent(() => toRootBlock(content.value) ?? { id: '', block: '' })
