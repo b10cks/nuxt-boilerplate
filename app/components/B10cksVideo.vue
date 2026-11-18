@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { useEventListener, useIntersectionObserver, usePreferredReducedMotion } from '@vueuse/core'
+import {
+  useEventListener,
+  useIntersectionObserver,
+  useNetwork,
+  usePreferredReducedMotion,
+} from '@vueuse/core'
 
 // Relative on purpose: the Vue compiler cannot resolve `~/` for a props type
 // (see `vite.vue.script.fs` in nuxt.config.ts).
@@ -13,8 +18,8 @@ import type { B10cksAsset } from '../b10cks/types'
  * downloading with the page, several MB that compete with the first paint even
  * when the video sits below the first screen. So the source is attached once
  * the page has loaded and the video is within half a viewport, and playback
- * starts then. Under reduced motion it stays paused; pass `controls` when the
- * visitor should be able to start it.
+ * starts then. Under reduced motion or Save-Data it stays paused and downloads
+ * nothing; pass `controls` when the visitor should be able to start it.
  *
  * It renders no poster. Put a `<B10cksImg>` behind it instead (see CLAUDE.md,
  * "Page performance"), which gets a srcset and the opening-image treatment.
@@ -23,6 +28,7 @@ defineProps<B10cksAsset>()
 
 const video = useTemplateRef('video')
 const reducedMotion = usePreferredReducedMotion()
+const { saveData } = useNetwork()
 
 const pageLoaded = ref(false)
 const inRange = ref(false)
@@ -48,7 +54,9 @@ const { stop } = useIntersectionObserver(
 watch(
   isNear,
   (near) => {
-    if (near && reducedMotion.value !== 'reduce') video.value?.play().catch(() => {})
+    if (near && reducedMotion.value !== 'reduce' && !saveData.value) {
+      video.value?.play().catch(() => {})
+    }
   },
   { flush: 'post' }
 )
