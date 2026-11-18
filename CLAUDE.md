@@ -40,6 +40,13 @@ Every block component receives:
 
 Mark the block editable so the editor can select it: `<section v-editable="block">`.
 
+`v-editable` also renders `id="<block.id>"`, server-side too, so internal links that point at a
+block (`/page#<block.id>`) scroll to it. `v-editable.noanchor` opts out. An `id` you set yourself
+on the same element only wins after hydration (the server HTML carries the block id), so use
+`.noanchor` when your own id must be in the server HTML. A block root without `v-editable` binds the id with `v-bind="blockAnchorAttrs(block)"`.
+Block ids are ULIDs and may start with a digit: look them up with `getElementById`, never
+`querySelector('#…')` without `CSS.escape`.
+
 ### isFirst and the LCP
 
 `isFirst` decides two things:
@@ -339,3 +346,38 @@ Never hardcode a translation string. Create the key in b10cks and read it with `
 
 The accessible labels in `AppHeader.vue` are English while i18n is off. Move them to `$t()` when you
 turn it on.
+
+An optional translatable field left empty in a translation shows the default-language value
+(`i18n_mode: overlay`). A language cannot switch a value off by leaving it blank.
+
+### Language switcher
+
+Build language and country menus from the page entry's `translations`, never from the served
+`language_iso`. In overlay mode an untranslated page is served from the default language while
+`language_iso` echoes the requested one. The page exists in the default language, every
+translation with a `published_at`, and the served `language_iso` only when `translations` is not
+empty. `usePageTranslations().setFromContent` does not follow this rule yet; build the map yourself
+and pass it to `setTranslations`. Details: `@b10cks/nuxt` README, "Page translations".
+
+- Link to each translation's own `full_slug`. Slugs differ per language, so swapping the locale in
+  the current path lands on a 404 or the wrong page.
+- The page that fetched the entry publishes the `language → path` map with `useState`, because the
+  menu sits in the layout, outside the page's tree. On dispose, clear it only if it still holds
+  your value: during a route transition the next page may already have published its own.
+- One `switchTo(target)` resolves the path for every entry point (menu, country list, geo
+  suggestion). A target with a translation goes to its path, one without goes to that locale's
+  home page. Routes without a CMS entry have no map: keep the current path.
+- hreflang alternates use the same map. Never advertise a fallback as an alternate.
+
+## Referenced content in preview
+
+`b10cks_vid` is the version of the previewed entry only. Never pass it into queries for other
+entries (referenced products, related articles): the API has no such version for them, returns
+nothing, and the section renders empty in the editor. Query them with `published`, or `draft`
+while `b10cks_vid` is present.
+
+## In-page anchor links
+
+b10cks rejects hash-only link URLs, so editors cannot enter `#booking`. For an anchor every page
+owns (a booking section, the consent dialog), editors set any URL (`/`) plus the anchor. Teach
+`useB10cksLink` to recognize that anchor and drop the URL, or the link navigates to `/` first.

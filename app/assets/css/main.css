@@ -84,6 +84,11 @@
     @apply lg:[--grid-margin:2rem];
   }
 
+  html {
+    /* Hash targets such as block anchors land below the sticky header. */
+    scroll-padding-top: 5rem;
+  }
+
   body {
     @apply bg-background text-base text-foreground antialiased;
   }
