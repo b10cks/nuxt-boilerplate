@@ -68,8 +68,14 @@ export default defineNuxtConfig({
     },
   },
 
+  // Lucide ships with the server bundle, so no icon is ever fetched from
+  // api.iconify.design, at build time or per request.
   icon: {
     provider: 'server',
+    serverBundle: { collections: ['lucide'] },
+    fallbackToApi: false,
+    // Unlayered, the icon's own `width: 1em` beats Tailwind's `size-*` utilities.
+    cssLayer: 'base',
     customCollections: [
       {
         prefix: 'custom',
@@ -113,7 +119,9 @@ export default defineNuxtConfig({
         name: 'ilum',
         provider: '~/utils/providers/ilum',
         options: {
-          baseURL: process.env.NUXT_ILUM_BASE_URL,
+          // Baked in at build time: a build without the variable would break
+          // every image, so it falls back to the public endpoint.
+          baseURL: process.env.NUXT_ILUM_BASE_URL || 'https://api.b10cks.com/ilum',
         },
       },
     },
@@ -126,6 +134,7 @@ export default defineNuxtConfig({
     // answers per visitor needs its own rule with `Cache-Control: no-store`.
     '/': { headers: RESPONSE_HEADERS },
     '/**': { headers: RESPONSE_HEADERS },
+    '/api/csp-report': { headers: { 'Cache-Control': 'no-store' } },
   },
 
   app: {

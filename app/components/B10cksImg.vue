@@ -49,42 +49,20 @@ const modifiers = computed(() => ({
 // renders below, or the browser downloads the image twice. `NuxtImg`'s own
 // `preload` leaves the srcset out and would fetch the largest file.
 if (import.meta.server && props.loading === 'eager') {
-  const img = useImage()
-  const { src, srcset, sizes } = img.getSizes(props.full_path, {
-    sizes: props.sizes,
-    modifiers: {
-      ...modifiers.value,
-      width: imgWidth.value,
-      height: imgHeight.value,
-      quality: img.options.quality,
-    },
-  })
-  useHead({
-    link: [
-      {
-        rel: 'preload',
-        as: 'image',
-        href: src,
-        imagesrcset: srcset,
-        imagesizes: sizes,
-        fetchpriority: 'high',
-        // Ahead of the inlined styles, behind the preconnect.
-        tagPriority: 25,
-      },
-    ],
-  })
+  const candidates = useImageCandidates()
+  usePreloadImage(
+    candidates(props.full_path, {
+      sizes: props.sizes,
+      modifiers: { ...modifiers.value, width: imgWidth.value, height: imgHeight.value },
+    })
+  )
 }
 
-// The focus drives the crop gravity in the URL. The same point steers CSS
-// `object-cover`, which re-crops whenever the box differs from the requested
-// ratio. Without a point the browser default (centre) stays.
-const objectPosition = computed(() => {
-  const point = typeof props.gravity === 'object' ? props.gravity : props.data?.focus
-  if (!point || typeof point !== 'object' || !('x' in point) || !('y' in point)) return undefined
-  return typeof point.x === 'number' && typeof point.y === 'number'
-    ? `${point.x}% ${point.y}%`
-    : undefined
-})
+// The focus drives the crop gravity in the URL and the CSS position alike.
+// Without a point the browser default (centre) stays.
+const objectPosition = computed(() =>
+  focusPosition(typeof props.gravity === 'object' ? props.gravity : props.data?.focus)
+)
 
 // Intrinsic dimensions reserve the right box before the image arrives, so the
 // layout does not shift. The dominant color fills that box in the meantime, and
