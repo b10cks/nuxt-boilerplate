@@ -38,7 +38,13 @@ Every block component receives:
 - `content` — the full `IBContent` entry. Only root blocks (the ones a page's `block` field names,
   like `Page.vue`) get this. Nested blocks read it via `inject('content')` if they need it.
 
-Mark the block editable so the editor can select it: `<section v-editable="block">`.
+Mark the block editable so the editor can select it: `<section v-editable="block">`. Bind a block
+once per page and use `v-editable.noanchor` on any second binding. An accordion, tab or slider
+uses `v-editable.interactive`, so its click handlers keep working in the editor.
+
+`v-editable-field` with `field` edits inline and fits plain string fields. Assets, blocks, links,
+dates, numbers and any field whose rendered text differs from its stored value (markdown,
+placeholders) take `path: ['<field>']`, which selects the field in the CMS.
 
 `v-editable` also renders `id="<block.id>"`, server-side too, so internal links that point at a
 block (`/page#<block.id>`) scroll to it. `v-editable.noanchor` opts out. An `id` you set yourself
@@ -68,6 +74,13 @@ Two rules that are not optional:
   @nuxt/image ships one size to every viewport.
 - Always let width and height through. They fix the aspect ratio and stop the layout shifting when
   the image arrives.
+
+For a full-screen opening image use
+`<B10cksCoverImage :image="block.image" :portrait="block.portrait" class="size-full object-cover" />`.
+Portrait viewports get the `portrait` asset, or a 9:16 crop of `image` around its focus, and
+download only that file.
+
+Repeated cards get at most four srcset candidates.
 
 The `ilum` provider (`app/utils/providers/ilum.ts`) is the default and reads
 `NUXT_ILUM_BASE_URL`.
@@ -106,6 +119,11 @@ Both come from `app/b10cks/` being global, and both fail silently.
    yourself, or branch on it in the template.
 2. **`v-html` on `<component :is>` comes back empty under SSR.** The directive is dropped when the
    component is resolved dynamically. Render through a render function instead.
+3. **`:is="'NuxtLink'"` renders a dead `<nuxtlink>` element.** Import `NuxtLink` from `#components`
+   and pass the component itself.
+
+List `@b10cks/*` packages outside `vite.optimizeDeps.include`: a second copy breaks injection during
+hydration.
 
 ## Preview
 
@@ -139,6 +157,15 @@ content and translations down together.
 - Never show `error.message` outside dev. A failed API request carries its URL with the access
   token.
 - Throw page errors through `fail()` in `app/pages/[...slug].vue`.
+- Only a confirmed 404 from the CMS becomes a 404. Any other CMS failure is a logged 503 with a
+  fixed message, so an outage cannot get pages deindexed.
+
+## Persistent layout
+
+`app.vue` wraps `<NuxtPage>` in `<NuxtLayout>`, so the header and footer stay mounted across
+navigations. Their setup runs once per visit, and `useRoute()` inside them only updates after the
+next page has loaded. Close overlays on the link click. A leaving page already sees the target
+route during its transition, so it reads its own data from what it fetched.
 
 ## Response headers and caching
 
@@ -150,7 +177,16 @@ content and translations down together.
   URL) needs its own rule with `Cache-Control: no-store`, or one visitor's answer is served to the
   next.
 - Error responses (4xx and 5xx) send `Cache-Control: no-store` (`server/plugins/error-cache.ts`), so
-  a page published after a 404 shows up at once.
+  a page published after a 404 shows up at once. Responses to `b10cks_vid` requests are `no-store`
+  too (`server/plugins/preview-cache.ts`).
+- An editor's cache TTL on an entry replaces the default `Cache-Control` through
+  `usePageCacheControl`. Previews and non-production environments keep their default.
+- Server HTML contains only query parameters from the CDN cache key. `useB10cksLink` adds the
+  page's query to same-page links after mount.
+- Give every `defineCachedEventHandler` with a custom `getKey` a `name`, or handlers share entries.
+- CSP violations go to `server/api/csp-report.post.ts`, which logs one JSON line per violation to
+  stdout. Rate limit by `rateLimitAddress(event)`: the visitor controls the first
+  `X-Forwarded-For` value.
 - A query parameter that changes the HTML must be in the CDN cache key: `b10cks_rv`, `b10cks_vid`,
   `drawer`, and every one you add. Read it reactively from `useRoute().query`.
 - Personal data from the query (a booking or account token) is read in the browser only, inside
@@ -174,6 +210,8 @@ in CMS text glues two words into one unbreakable word. Fix that in the content.
 
 - Text needs 4.5:1 contrast against its background, muted text and badge labels included. Check
   every theme a token is used in.
+- Screen-reader text inside a horizontal scroller needs a `relative` track, or its absolute
+  position widens the page.
 - A link or button needs a 24px touch target, also inline phone and mail links in a card.
 - `aria-label` only works on an element with a role: a landmark, a control, or an explicit
   `role`. On a plain `<div>` it is ignored.
@@ -207,7 +245,10 @@ A props type that extends an imported type must import it by relative path:
 `interface Props extends B10cksAsset`. Through `~/` the build fails with "Failed to resolve extends
 base type". The Vue compiler has to read that file, and TypeScript 7 no longer ships the API it
 resolves aliases with (`vite.vue.script.fs` in nuxt.config.ts covers the file access). An imported
-type used for a single prop, `defineProps<{ block: B10cksHero }>()`, is not affected.
+type used for a single prop, `defineProps<{ block: B10cksHero }>()`, is not affected. Extend the
+base type directly: a utility type (`extends Partial<B10cksAsset>`) passes typecheck and fails the
+build. A component no block uses is not compiled, so a passing build does not prove its props
+resolve.
 
 ## Page performance
 
@@ -227,7 +268,8 @@ blocks.
   `format`, `quality` or `densities` passed to `B10cksImg` reach the `<img>` but not the preload
   link, with the same result. Set them in the `image` config instead.
 - **Script preloads wait for that image.** `deferScriptPreloads` (`server/utils/scriptPreloads.ts`,
-  called from `server/plugins/csp-nonce.ts`) takes the `modulepreload` links out of the head. An
+  called from `server/plugins/csp-nonce.ts`) takes the `modulepreload` and `prefetch` links out of
+  the head. An
   inline script adds them back at low priority once `img[fetchpriority="high"]` has loaded, or
   right away on a page without one. It must run before the nonce pass.
 - **`sizes` keys are `xs`, `sm`, `md`, `lg`, `xl`, `2xl`.** @nuxt/image skips an unknown key
@@ -253,15 +295,20 @@ blocks.
     finds no entry, and `app/pages/[...slug].vue` reloads it from the server. Throw page errors
     through its `fail()`, which keeps that reload and makes the error fatal in the browser.
   - A block that lists other entries (teasers, related articles) maps them down to the card fields
-    in the `transform` option of `useContents`. Without it six cards shipped 95 KB of article
+    in the `transform` option of `useContents`, with `withoutBody` for entries and `toCardImage`
+    for card images (`app/utils/b10cksContent.ts`). Without it six cards shipped 95 KB of article
     bodies.
   - When you turn i18n on, load the page once and check the Network tab: the browser must not
     request the `translations` datasource again after SSR.
-- **Preload the one font every page uses.** Import the file with `?url` in `app/app.vue` and add a
-  `preload` link with `as: 'font'` and `crossorigin`. Give it a metric-matched fallback: an
+- **The inlined CSS loads the fonts.** The browser finds them there as early as through a preload
+  link, and a preload competes with the arriving HTML: first paint measured 320 ms without one and
+  420 ms with one on a throttled phone profile. Give each web font a metric-matched fallback: an
   `@font-face` over `local('Arial')` with `size-adjust` and ascent and descent overrides, next in
   the font stack. Without it paragraphs reflow by two to three lines when the web font swaps in.
-- **Third-party scripts load after the page.** The boilerplate ships none. When you add GTM or a
+- **Hidden carousel slides stay painted.** A slide that first paints when it rotates in becomes the
+  LCP 12 to 20 s into the visit.
+- **Third-party scripts load after the page.** The boilerplate ships none. Tracking stays off in the
+  live preview and counts a page view after the head has updated. When you add GTM or a
   CMP, keep the consent defaults as an inline script in the head and request the container on the
   window `load` event. Events pushed before that wait in `dataLayer`. Inline scripts in the server
   HTML get the CSP nonce from `csp-nonce.ts`. A script element created at runtime does not: copy
@@ -277,6 +324,8 @@ blocks.
 - Use Lighthouse with applied throttling (`--throttling-method=devtools`) on a local production
   build, at least two runs, and compare before and after on the same setup. PageSpeed Insights
   simulates throttling and reports an LCP of 3 to 4 s where applied throttling measures 1.3 s.
+- Measure behind an HTTP/2 proxy with compression. Check that `text/javascript` is compressed: a
+  missing entry in `gzip_types` made one entry chunk 496 KB instead of 166 KB.
 - On a deployed site, skip the first request after a deploy or cache purge. It includes the cold
   start.
 - Check the server HTML too: no stylesheet link in the head, the preload link names the same
@@ -316,6 +365,13 @@ Every page has one URL, one language and one h1. The rules that keep it that way
   stays off unless the page's own URL is in the set. When you turn i18n on, pass the active
   locale as `language` and as `language_iso` to `useContent`. `NUXT_PUBLIC_DEFAULT_LANGUAGE`
   must match the space's default language.
+- **Site structured data comes from `_config`.** The default layout calls `useSiteSchema(config)`
+  once. `useB10cksSeo` appends `siteName` to fallback titles; an editor's `meta.title` is used as
+  written. The share image is the first raster image of `meta.ogImage`, the optional lead image
+  getter and `shareImage` on `_config`.
+- **Breadcrumbs are structured data.** `useBreadcrumbSchema` fetches the trail on the server, so it
+  stays out of the payload.
+- **Question accordions are FAQ content.** Mark them up with `FAQPage` and `defineQuestion`.
 - **Exactly one h1.** Every block that renders a heading takes `isFirst` and renders `<h1>`
   when it leads the page. A block that ignores it leaves the page without an h1 whenever an
   editor puts it first.
@@ -339,8 +395,22 @@ default output path is already correct. Never edit the generated file.
 
 ## i18n
 
-`nuxt-i18n` is scaffolded but off: the `i18n` block in nuxt.config.ts is commented out. When you
-turn it on, messages come from the b10cks `translations` datasource via `i18n/fetchLocale.ts`.
+`nuxt-i18n` is scaffolded but off. Turn it on with the steps in the comment above the `i18n` block
+in nuxt.config.ts. Messages come from the b10cks `translations` datasource via
+`i18n/fetchLocale.ts`.
+
+- Pass the active locale as `language_iso` in `app/pages/[...slug].vue` and to
+  `fetchB10cksConfig` in the default layout.
+- The root redirect depends on the browser language: give `/` `no-store`, or add `Accept-Language`
+  to its CDN cache key. On a site that is already live, set `redirectOn: 'no prefix'` so old
+  unprefixed URLs redirect.
+- Locale files use `export default defineI18nLocale(() => fetchLocale('<code>'))`, so the browser
+  never requests the datasource again. Leave `cache` unset on them: `cache: true` keeps server
+  messages for a day.
+- Locale codes are lowercase, because `canonical-path.ts` lowercases URLs.
+- Internal links go through `useB10cksLink`, `<RichText>` or `useLocalizeHref()`, which keep the
+  visitor's language.
+- b10cks matches slugs across languages, so answer 404 for a slug that belongs to another language.
 
 Never hardcode a translation string. Create the key in b10cks and read it with `$t()`.
 
