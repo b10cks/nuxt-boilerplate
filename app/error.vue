@@ -23,6 +23,7 @@ const FALLBACK = {
 } as const
 
 const route = useRoute()
+const localize = useLocalizeHref()
 
 const status = computed(() => props.error.status ?? props.error.statusCode ?? 500)
 const isClientError = computed(() => status.value >= 400 && status.value < 500)
@@ -76,7 +77,7 @@ onMounted(() => main.value?.focus({ preventScroll: true }))
         <p class="mt-4 text-pretty text-muted-foreground">{{ copy.text }}</p>
         <div class="mt-8 flex flex-wrap gap-6">
           <a
-            href="/"
+            :href="localize('/')"
             class="underline underline-offset-4"
           >
             {{ FALLBACK.home }}

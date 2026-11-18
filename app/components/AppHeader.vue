@@ -2,6 +2,7 @@
 import Logo from '~/assets/logo.svg?component'
 
 const config = useB10cksSiteConfig()
+const localize = useLocalizeHref()
 
 const showMenu = ref(false)
 const toggleMenu = () => {
@@ -85,7 +86,7 @@ const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value
     <div class="content-grid">
       <div class="flex items-center">
         <NuxtLink
-          to="/"
+          :to="localize('/')"
           :aria-label="`${config.siteName} - Homepage`"
           class="shrink-0"
         >

@@ -5,6 +5,7 @@ const PREVIEW_PARAMS = ['b10cks_rv', 'b10cks_vid']
 
 export default function useB10cksLink() {
   const route = useRoute()
+  const localize = useLocalizeHref()
 
   // The server renders no visitor's query into a link: the HTML is shared at the
   // CDN. Read the result in a computed or the template, so it updates on mount.
@@ -66,7 +67,7 @@ export default function useB10cksLink() {
     }
 
     const [, path = '', search = '', hash = ''] =
-      internalHref(url).match(/^([^?#]*)(?:\?([^#]*))?(#.*)?$/) ?? []
+      localize(url).match(/^([^?#]*)(?:\?([^#]*))?(#.*)?$/) ?? []
     const fragment = anchor || hash
     const ownParams = new URLSearchParams(search)
     const searchParams = new URLSearchParams(params ?? ('params' in link ? link.params : undefined))

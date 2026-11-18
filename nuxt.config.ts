@@ -86,17 +86,17 @@ export default defineNuxtConfig({
 
   // Uncomment to enable i18n. Messages come from the b10cks `translations`
   // datasource: have each `i18n/locales/<code>.ts` do
-  // `export default async () => fetchLocale('<code>')`
-  // with `fetchLocale` from `i18n/fetchLocale.ts`. Keep that default export a
-  // plain arrow function: under Vite 8 the i18n resource plugin only accepts a
-  // function or an object literal there, and a `defineI18nLocale(...)` call
-  // makes SSR message loading fail. Also uncomment '@nuxtjs/i18n' in `modules`
-  // and add it as a dependency. Never call `useI18n()` in a route middleware
-  // (it needs setup context): use `useNuxtApp().$i18n` there.
+  // `export default defineI18nLocale(() => fetchLocale('<code>'))`
+  // with `defineI18nLocale` from `#i18n` and `fetchLocale` from
+  // `i18n/fetchLocale.ts`. Keep that call: @nuxtjs/i18n only serves messages from
+  // the server for a loader it recognises, and with a plain function every
+  // browser requests the datasource itself. Also uncomment '@nuxtjs/i18n' in
+  // `modules` and add it as a dependency. Never call `useI18n()` in a route
+  // middleware (it needs setup context): use `useNuxtApp().$i18n` there.
   /*
     i18n: {
       baseUrl: process.env.NUXT_PUBLIC_APP_URL || '',
-      defaultLocale: 'en',
+      defaultLocale: process.env.NUXT_PUBLIC_DEFAULT_LANGUAGE || 'en',
       strategy: 'prefix',
       detectBrowserLanguage: {
         useCookie: false,
@@ -105,6 +105,14 @@ export default defineNuxtConfig({
       locales: [
         { file: 'en.ts', code: 'en', language: 'en-US', name: 'English' },
       ],
+      // Browsers and the CDN keep `/_i18n/.../messages.json` for five minutes, and
+      // `fetchLocale` keeps messages for as long on the server. Do not mark a
+      // locale file `cache: true`: the server then holds its messages for a day,
+      // whatever `cacheLifetime` says. `httpCacheDuration` needs `cacheLifetime`.
+      experimental: {
+        cacheLifetime: 300,
+        httpCacheDuration: 300,
+      },
     },
   */
 

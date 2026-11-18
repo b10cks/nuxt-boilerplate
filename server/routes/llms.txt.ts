@@ -10,23 +10,24 @@ export default defineEventHandler(async (event) => {
   const api = await createServerB10cksApi(event)
   const origin = resolveSiteUrl(event)
 
-  const [intro, pages] = await Promise.all([
+  const { codes } = localeSettings(useRuntimeConfig(event).public)
+  const [intro, { pages, localePrefix }] = await Promise.all([
     api
       .getContent<{ content?: string }>('_llms')
       .then((entry) => entry.content?.content?.trim() || '')
       // The _llms entry does not exist in this space yet.
       .catch(() => ''),
-    fetchIndexablePages(api, origin),
+    fetchIndexablePages(api, origin, codes),
   ])
 
   const lines = [
     ...(intro ? [intro, ''] : []),
     '## Pages',
     '',
-    ...pages.map(
-      (page) =>
-        `- [${page.name}](${siteUrl(origin, buildLocalizedPath(page.full_slug, page.language_iso))})`
-    ),
+    ...pages.map((page) => {
+      const language = localePrefix === 'always' ? page.language_iso : null
+      return `- [${page.name}](${siteUrl(origin, buildLocalizedPath(page.full_slug, language))})`
+    }),
     '',
     '## Optional',
     '',
