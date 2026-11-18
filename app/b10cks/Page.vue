@@ -12,6 +12,7 @@ useB10cksSeo(
   () => props.block.meta,
   () => props.content.name
 )
+useBreadcrumbSchema(props.content)
 </script>
 
 <template>
