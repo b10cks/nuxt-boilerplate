@@ -9,16 +9,15 @@ import { useRuntimeConfig } from '#imports'
  * Wire it up in the `i18n` block of nuxt.config.ts, e.g.
  * `locales: [{ code: 'en', language: 'en-US', name: 'English', file: 'en.ts' }]`
  * with `i18n/locales/en.ts` doing
- * `export default async () => fetchLocale('en')`. Keep that a plain arrow
- * function: wrapped in `defineI18nLocale` the default export is a call
- * expression, which the i18n resource plugin under Vite 8 rejects.
+ * `export default defineI18nLocale(() => fetchLocale('en'))`. Keep that call: for
+ * a plain function @nuxtjs/i18n runs the loader in the browser, and every visitor
+ * requests the datasource again after SSR.
  *
- * The base locale's strings are the stored `value`; every other locale is a
- * dimension on top of it, so b10cks falls back to the base for keys a locale
- * has not translated yet.
+ * The strings of the space's default language are the stored `value`; every other
+ * locale is a dimension on top of it, so b10cks falls back to the default language
+ * for keys a locale has not translated yet.
  */
 const SOURCE = 'translations'
-const BASE_LOCALE = 'en'
 
 /**
  * Fetched in one page on purpose. The datasource entries endpoint mis-offsets
@@ -81,7 +80,7 @@ export async function fetchLocale(locale: string): Promise<Record<string, unknow
     return cached.messages
   }
 
-  const { b10cks } = useRuntimeConfig().public
+  const { b10cks, defaultLanguage } = useRuntimeConfig().public
 
   try {
     const api = createB10cksDataApi(
@@ -94,9 +93,9 @@ export async function fetchLocale(locale: string): Promise<Record<string, unknow
 
     const entries = await api.getDataEntries(SOURCE, {
       per_page: PER_PAGE,
-      // `dimension` selects the locale's overrides. The base locale has none:
-      // its strings are the stored `value`.
-      ...(locale === BASE_LOCALE ? {} : { dimension: locale }),
+      // `dimension` selects the locale's overrides. The default language has
+      // none: its strings are the stored `value`.
+      ...(locale === defaultLanguage ? {} : { dimension: locale }),
     })
 
     const messages = unflatten(entries)
