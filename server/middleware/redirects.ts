@@ -12,19 +12,53 @@ import type { H3Event } from 'h3'
  * `app/middleware/redirects.global.ts` holds the static redirect map.
  */
 const CACHE_TTL_MS = 5 * 60 * 1000
+const RETRY_AFTER_FAILURE_MS = 30 * 1000
+const LOOKUP_TIMEOUT_MS = 10 * 1000
 
 let cache: { map: RedirectMap; expiresAt: number } | undefined
+let lookup: Promise<RedirectMap> | undefined
 
-async function loadRedirects(event: H3Event): Promise<RedirectMap> {
+async function fetchRedirects(event: H3Event): Promise<RedirectMap> {
+  const api = await createServerB10cksApi(event)
+  return collapseRedirects(await api.getRedirects({}, { allPages: true }))
+}
+
+/** Every request waits on the shared lookup, so one that hangs must not wait forever. */
+function withTimeout<T>(work: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Redirect lookup timed out')), LOOKUP_TIMEOUT_MS)
+  })
+
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
+}
+
+/**
+ * Keeps the last good map through an outage and asks again after a short
+ * pause, so requests do not queue up behind a CMS that is down. Never rejects.
+ */
+async function refreshRedirects(event: H3Event): Promise<RedirectMap> {
+  try {
+    const map = await withTimeout(fetchRedirects(event))
+    cache = { map, expiresAt: Date.now() + CACHE_TTL_MS }
+  } catch {
+    cache = { map: cache?.map ?? {}, expiresAt: Date.now() + RETRY_AFTER_FAILURE_MS }
+  }
+
+  return cache.map
+}
+
+/** A burst on a cold or expired cache shares one lookup. */
+function loadRedirects(event: H3Event): RedirectMap | Promise<RedirectMap> {
   if (cache && Date.now() < cache.expiresAt) {
     return cache.map
   }
 
-  const api = await createServerB10cksApi(event)
-  const map = collapseRedirects(await api.getRedirects({}, { allPages: true }))
-  cache = { map, expiresAt: Date.now() + CACHE_TTL_MS }
+  lookup ??= refreshRedirects(event).finally(() => {
+    lookup = undefined
+  })
 
-  return map
+  return lookup
 }
 
 export default defineEventHandler(async (event) => {
@@ -48,16 +82,12 @@ export default defineEventHandler(async (event) => {
     return
   }
 
-  try {
-    const redirect = (await loadRedirects(event))[path]
-    if (redirect) {
-      // The query string travels along (campaign parameters, `?drawer=`).
-      const query = url.search.slice(1)
-      const separator = redirect.target.includes('?') ? '&' : '?'
-      const target = query ? `${redirect.target}${separator}${query}` : redirect.target
-      return sendRedirect(event, target, redirect.status_code || 301)
-    }
-  } catch {
-    // A redirect lookup failure must not take the page down.
+  const redirect = (await loadRedirects(event))[path]
+  if (redirect) {
+    // The query string travels along (campaign parameters, `?drawer=`).
+    const query = url.search.slice(1)
+    const separator = redirect.target.includes('?') ? '&' : '?'
+    const target = query ? `${redirect.target}${separator}${query}` : redirect.target
+    return sendRedirect(event, target, redirect.status_code || 301)
   }
 })
