@@ -142,6 +142,8 @@ content and translations down together.
   while a new copy is fetched. A route that answers per visitor (geo lookup, form submit, signed
   URL) needs its own rule with `Cache-Control: no-store`, or one visitor's answer is served to the
   next.
+- Error responses (4xx and 5xx) send `Cache-Control: no-store` (`server/plugins/error-cache.ts`), so
+  a page published after a 404 shows up at once.
 - A query parameter that changes the HTML must be in the CDN cache key: `b10cks_rv`, `b10cks_vid`,
   `drawer`, and every one you add. Read it reactively from `useRoute().query`.
 - Personal data from the query (a booking or account token) is read in the browser only, inside
