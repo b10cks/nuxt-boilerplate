@@ -170,7 +170,7 @@ const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value
       >
         <span class="sr-only">Menu</span>
         <svg
-          class="group ease-macro-bounce ransition-transform relative cursor-pointer duration-300 group-hover:rotate-90"
+          class="group ease-macro-bounce relative cursor-pointer transition-transform duration-300 group-hover:rotate-90"
           viewBox="0 0 32 32"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"

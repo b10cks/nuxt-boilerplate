@@ -336,3 +336,6 @@ default output path is already correct. Never edit the generated file.
 turn it on, messages come from the b10cks `translations` datasource via `i18n/fetchLocale.ts`.
 
 Never hardcode a translation string. Create the key in b10cks and read it with `$t()`.
+
+The accessible labels in `AppHeader.vue` are English while i18n is off. Move them to `$t()` when you
+turn it on.
