@@ -1,4 +1,5 @@
 <template>
+  <NuxtRouteAnnouncer />
   <NuxtLoadingIndicator
     :height="3"
     :duration="5000"
