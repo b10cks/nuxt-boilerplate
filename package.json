@@ -27,8 +27,8 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@b10cks/nuxt": "^3.6.1",
-    "@b10cks/richtext": "^0.6.1",
+    "@b10cks/nuxt": "^4.2.0",
+    "@b10cks/richtext": "^1.1.0",
     "@nuxt/icon": "2.3.1",
     "@nuxt/image": "2.0.0",
     "@tailwindcss/vite": "^4.3.3",

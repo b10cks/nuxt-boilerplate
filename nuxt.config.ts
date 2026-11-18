@@ -53,6 +53,9 @@ export default defineNuxtConfig({
     // Only the b10cks editor may drive the preview bridge (matches the CSP
     // frame-ancestors below).
     allowedOrigins: ['https://app.b10cks.com'],
+    // A slow CMS must not hold a render open indefinitely.
+    timeoutMs: 5000,
+    retries: 2,
   },
 
   runtimeConfig: {
