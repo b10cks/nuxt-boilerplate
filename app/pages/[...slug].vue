@@ -44,9 +44,8 @@ if (!content.value) {
 }
 
 // Live-updates while editing in the b10cks editor; outside preview mode it
-// simply tracks the fetched content tree.
-const tree = usePreviewContent(() => content.value?.content ?? {})
-const block = computed(() => toBlock(content.value, tree.value))
+// simply tracks the fetched entry.
+const block = usePreviewContent(() => toRootBlock(content.value) ?? { id: '', block: '' })
 
 provide('content', content)
 
