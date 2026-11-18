@@ -4,5 +4,7 @@
     :duration="5000"
     :throttle="400"
   />
-  <NuxtPage />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>

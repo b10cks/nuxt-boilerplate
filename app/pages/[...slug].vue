@@ -78,12 +78,10 @@ useSeoMeta(
 
 <template>
   <div>
-    <NuxtLayout>
-      <B10cksComponent
-        v-if="content && block"
-        :block="block"
-        :content="content"
-      />
-    </NuxtLayout>
+    <B10cksComponent
+      v-if="content"
+      :block="block"
+      :content="content"
+    />
   </div>
 </template>
