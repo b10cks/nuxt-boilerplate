@@ -28,14 +28,13 @@ const year = computed(() => new Date().getFullYear())
 
         <Markdown
           v-if="config?.footerText"
-          v-editable="config"
-          v-editable-field="{ id: config?.id, field: 'footerText' }"
+          v-editable-field="{ id: config?.id, path: ['footerText'] }"
           :content="config.footerText"
           class="prose prose-invert"
         />
       </div>
       <div
-        v-editable-field="{ id: config?.id, field: 'footerMenu' }"
+        v-editable-field="{ id: config?.id, path: ['footerMenu'] }"
         class="flex flex-col gap-8 sm:flex-row md:gap-16 lg:ml-auto"
       >
         <B10cksComponent
@@ -48,7 +47,7 @@ const year = computed(() => new Date().getFullYear())
     <div class="mt-4 flex flex-col items-start md:flex-row">
       <Markdown
         v-if="config?.copyright"
-        v-editable-field="{ id: config?.id, field: 'copyright' }"
+        v-editable-field="{ id: config?.id, path: ['copyright'] }"
         class="order-2 w-full pt-2 text-center md:order-1 md:text-left"
         :content="config.copyright.replace('{year}', String(year))"
       />
