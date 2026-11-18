@@ -29,14 +29,28 @@ function hasForeignCanonical(entry: IBSitemapEntry, origin: string): boolean {
  * absolute URL. Fragments (`_config`, `_drawers/…`) are dropped too, because
  * the page renders them noindex, and so are entries whose canonical names
  * another URL, because only that URL should be indexed.
+ *
+ * With i18n on the API is asked once per locale, because it answers for one
+ * language per request, and every URL carries its locale. With i18n off a URL
+ * is prefixed only when the pages span more than one language.
+ * `localePrefix` is that decision, for everything that publishes the list.
  */
-export async function fetchIndexablePages(
-  api: B10cksDataApi,
-  origin: string
-): Promise<IBSitemapEntry[]> {
-  const entries = await api.getSitemap({}, { allPages: true })
+export async function fetchIndexablePages(api: B10cksDataApi, origin: string, locales: string[]) {
+  const entries = locales.length
+    ? (
+        await Promise.all(
+          locales.map((language_iso) => api.getSitemap({ language_iso }, { allPages: true }))
+        )
+      ).flat()
+    : await api.getSitemap({}, { allPages: true })
 
-  return filterSitemapEntries(entries, { siteUrl: origin }).filter(
-    (entry) => !isFragmentSlug(entry.full_slug) && !hasForeignCanonical(entry, origin)
-  )
+  const pages = filterSitemapEntries(entries, {
+    siteUrl: origin,
+    localePrefix: locales.length ? 'always' : 'auto',
+  }).filter((entry) => !isFragmentSlug(entry.full_slug) && !hasForeignCanonical(entry, origin))
+
+  const isPrefixed =
+    locales.length > 0 || new Set(pages.flatMap((page) => page.language_iso ?? [])).size > 1
+
+  return { pages, localePrefix: isPrefixed ? ('always' as const) : ('never' as const) }
 }

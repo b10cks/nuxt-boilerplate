@@ -3,10 +3,9 @@ import { renderSitemapXml } from '@b10cks/client'
 /**
  * Every published, indexable page (`fetchIndexablePages`) as a `<urlset>`.
  *
- * Note that URLs are prefixed with the entry's `language_iso` when the space
- * has one set, matching `strategy: 'prefix'`. Pass a `locale` to
- * `filterSitemapEntries` in `fetchIndexablePages` if a single language should
- * be published.
+ * URLs carry the entry's `language_iso` as `fetchIndexablePages` decides. Pass
+ * a `locale` to `filterSitemapEntries` there if a single language should be
+ * published.
  *
  * For a larger space, split this into a `<sitemapindex>` (see
  * `renderSitemapIndex`) with one child per language or content section, so a
@@ -16,7 +15,9 @@ export default defineEventHandler(async (event) => {
   const api = await createServerB10cksApi(event)
   const siteUrl = resolveSiteUrl(event)
 
-  const xml = renderSitemapXml(await fetchIndexablePages(api, siteUrl), siteUrl)
+  const { codes } = localeSettings(useRuntimeConfig(event).public)
+  const { pages, localePrefix } = await fetchIndexablePages(api, siteUrl, codes)
+  const xml = renderSitemapXml(pages, siteUrl, { localePrefix })
 
   setResponseHeader(event, 'content-type', 'application/xml; charset=utf-8')
   setResponseHeader(event, 'cache-control', 'max-age=180, s-maxage=86400, public')
