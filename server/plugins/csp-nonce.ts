@@ -23,6 +23,9 @@ export default defineNitroPlugin((nitroApp) => {
     html.body = html.body.map(addNonce)
     html.bodyAppend = html.bodyAppend.map(addNonce)
 
+    const reportUrl = siteUrl(resolveSiteUrl(event), '/api/csp-report')
+    setResponseHeader(event, 'Reporting-Endpoints', `csp="${reportUrl}"`)
+
     setResponseHeader(
       event,
       'Content-Security-Policy',
@@ -44,6 +47,10 @@ export default defineNitroPlugin((nitroApp) => {
         // Required for live preview: without it the b10cks editor cannot iframe
         // the site.
         'frame-ancestors https://app.b10cks.com',
+        // Browsers with the Reporting API use report-to and ignore report-uri,
+        // the others only know report-uri.
+        `report-uri ${reportUrl}`,
+        'report-to csp',
       ].join('; ')
     )
   })

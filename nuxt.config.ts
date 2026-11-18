@@ -134,6 +134,7 @@ export default defineNuxtConfig({
     // answers per visitor needs its own rule with `Cache-Control: no-store`.
     '/': { headers: RESPONSE_HEADERS },
     '/**': { headers: RESPONSE_HEADERS },
+    '/api/csp-report': { headers: { 'Cache-Control': 'no-store' } },
   },
 
   app: {
