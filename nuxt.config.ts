@@ -119,7 +119,9 @@ export default defineNuxtConfig({
         name: 'ilum',
         provider: '~/utils/providers/ilum',
         options: {
-          baseURL: process.env.NUXT_ILUM_BASE_URL,
+          // Baked in at build time: a build without the variable would break
+          // every image, so it falls back to the public endpoint.
+          baseURL: process.env.NUXT_ILUM_BASE_URL || 'https://api.b10cks.com/ilum',
         },
       },
     },
