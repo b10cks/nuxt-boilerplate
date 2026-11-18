@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@golar/vue": "^0.1.11",
+    "@iconify-json/lucide": "^1.2.156",
     "@types/node": "^26.6.5",
     "golar": "^0.1.11",
     "oxfmt": "^0.59.0",

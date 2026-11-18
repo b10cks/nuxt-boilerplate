@@ -68,8 +68,14 @@ export default defineNuxtConfig({
     },
   },
 
+  // Lucide ships with the server bundle, so no icon is ever fetched from
+  // api.iconify.design, at build time or per request.
   icon: {
     provider: 'server',
+    serverBundle: { collections: ['lucide'] },
+    fallbackToApi: false,
+    // Unlayered, the icon's own `width: 1em` beats Tailwind's `size-*` utilities.
+    cssLayer: 'base',
     customCollections: [
       {
         prefix: 'custom',

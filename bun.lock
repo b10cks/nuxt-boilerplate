@@ -24,6 +24,7 @@
       },
       "devDependencies": {
         "@golar/vue": "^0.1.11",
+        "@iconify-json/lucide": "^1.2.156",
         "@types/node": "^26.6.5",
         "golar": "^0.1.11",
         "oxfmt": "^0.59.0",
@@ -193,6 +194,8 @@
     "@golar/vue": ["@golar/vue@0.1.11", "", { "dependencies": { "@golar/util": "0.1.11", "@golar/volar": "0.1.11", "@vue/compiler-dom": "^3.5.44", "@vue/language-core": "3.3.13" } }, "sha512-1qIPEMOWd/80vvMZS9KYQ9biUNfBRC+VvxHHxP/QopYCtDsXjDDUqlzztYZuXY4khsZt02tR5BfS+5SV+CPBjw=="],
 
     "@golar/win32-x64": ["@golar/win32-x64@0.1.11", "", { "os": "win32", "cpu": "x64" }, "sha512-uSFxpQ+24aQY7wvDW7DG7rJxCqv9Kga1cMhn+uyeZsQOF4gybX0PqZLkxx8rUziz/SVt5/pXmo70/1XMU+VGOg=="],
+
+    "@iconify-json/lucide": ["@iconify-json/lucide@1.2.156", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-IOB3g2X+cmpoEPcjEbGfpDWPPzXioeDW2gnYgaNxYSaVEHyM4fQqP2uz29cdRQJbQwo5CTQ8D9NJnATeCQKatQ=="],
 
     "@iconify/collections": ["@iconify/collections@1.0.754", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-5AJQgPgjBFGwsQGyDjySYvkzX2tU4GO+blKb1HExUuiha3rhvUvw5rvQxZ/WBX3YJFl4kqqV3gcjpdidsXhH/w=="],
 
