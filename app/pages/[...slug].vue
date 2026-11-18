@@ -43,7 +43,8 @@ if (error.value) {
   await fail({ statusCode: 503, statusMessage: 'Content Unavailable' })
 }
 
-if (!content.value) {
+// A folder only groups entries, it has no page of its own.
+if (!content.value || content.value.block === 'folder') {
   await fail({ statusCode: 404, statusMessage: 'Not Found' })
 }
 
