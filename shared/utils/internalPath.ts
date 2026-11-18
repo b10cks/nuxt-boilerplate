@@ -1,3 +1,8 @@
+/** False for paths that are no pages: files, API routes and Nuxt internals. */
+export function isPagePath(path: string): boolean {
+  return !path.includes('.') && !/^\/(?:api\/|_nuxt\/|__nuxt)/.test(path)
+}
+
 /**
  * The URL a page answers on: lowercase, single slashes, no trailing slash, and
  * `/` for the `home` entry. Follows server/middleware/canonical-path.ts, so an
@@ -6,7 +11,7 @@
  */
 export function internalPath(path: string): string {
   const absolute = path.startsWith('/') ? path : `/${path}`
-  if (absolute.includes('.') || /^\/(?:api\/|_nuxt\/|__nuxt)/.test(absolute)) {
+  if (!isPagePath(absolute)) {
     return absolute
   }
 

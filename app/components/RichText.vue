@@ -22,17 +22,13 @@ const props = defineProps<{
   editable?: EditableRichTextField
 }>()
 
-/** Turns a b10cks internal link into an app path. */
+const localize = useLocalizeHref()
+
+/** Turns a b10cks internal link into an app path. The renderer appends `attrs.anchor`. */
 function resolveInternalLink(attrs: RichTextInternalLinkAttrs): string {
   // The editor has written the target under three different keys over time.
   const raw = attrs.url || attrs.cached_url || attrs.href || ''
-  if (!raw) return '#'
-
-  // Absolute, protocol and anchor-only links are already final.
-  if (/^(https?:|mailto:|tel:|sms:|#)/i.test(raw) || raw.includes('//')) return raw
-
-  // The renderer appends `attrs.anchor` as the fragment.
-  return raw.startsWith('/') ? raw : `/${raw}`
+  return raw ? localize(raw) : '#'
 }
 </script>
 
