@@ -8,12 +8,12 @@ const toggleMenu = () => {
   showMenu.value = !showMenu.value
 }
 
-const route = useRoute()
+const router = useRouter()
 const menu = useTemplateRef('menu')
 const closeButton = useTemplateRef('closeButton')
 
 // The element that opened the dialog gets focus back when it closes, unless
-// focus already left the dialog (a link click that navigates).
+// focus already left the dialog.
 let opener: HTMLElement | null = null
 
 watch(showMenu, (isOpen) => {
@@ -27,10 +27,13 @@ watch(showMenu, (isOpen) => {
   opener = null
 })
 
-watch(
-  () => route.fullPath,
-  () => (showMenu.value = false)
-)
+// Closes on the click, not on the route: in the layout `useRoute()` only updates
+// once the next page has loaded, and a link to the current page never changes it.
+const onMenuClick = (event: MouseEvent) => {
+  if (event.target instanceof Element && event.target.closest('a[href]')) {
+    showMenu.value = false
+  }
+}
 
 const onKeydown = (event: KeyboardEvent) => {
   if (!showMenu.value) return
@@ -56,8 +59,17 @@ const onKeydown = (event: KeyboardEvent) => {
   }
 }
 
-onMounted(() => document.addEventListener('keydown', onKeydown))
+// Back and forward navigate without a click.
+let removeRouterHook: (() => void) | undefined
+
+onMounted(() => {
+  document.addEventListener('keydown', onKeydown)
+  removeRouterHook = router.afterEach(() => {
+    showMenu.value = false
+  })
+})
 onBeforeUnmount(() => {
+  removeRouterHook?.()
   document.removeEventListener('keydown', onKeydown)
   document.documentElement.classList.remove('overflow-hidden')
 })
@@ -157,6 +169,7 @@ const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value
     aria-modal="true"
     aria-label="Main menu"
     role="dialog"
+    @click="onMenuClick"
   >
     <div :class="['menu theme-lighter absolute inset-0 flex flex-col']">
       <div class="pointer-events-none absolute inset-0 opacity-5" />
@@ -209,7 +222,6 @@ const menuOverlayClasses = computed(() => ({ 'translate-x-full': !showMenu.value
             <B10cksComponent
               :block="item"
               class="cursor-pointer uppercase transition-colors duration-500 ease-butter"
-              @click="toggleMenu"
             />
           </div>
         </nav>

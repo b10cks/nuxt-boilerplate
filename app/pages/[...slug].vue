@@ -33,20 +33,24 @@ async function fail(error: { statusCode: number; statusMessage: string }): Promi
 }
 
 if (error.value) {
-  const { statusCode = 500, statusMessage = error.value.message } = isNuxtError(error.value)
-    ? error.value
-    : {}
-  await fail({ statusCode, statusMessage })
+  const status = isNuxtError(error.value) ? error.value.statusCode : undefined
+  if (status === 404) {
+    await fail({ statusCode: 404, statusMessage: 'Not Found' })
+  }
+  // Only a confirmed miss is a 404: an outage must not get pages deindexed. The
+  // fixed message keeps the details of the failed request out of the response.
+  console.error(`[cms] Loading "${slug}" failed with status ${status}`)
+  await fail({ statusCode: 503, statusMessage: 'Content Unavailable' })
 }
 
-if (!content.value) {
+// A folder only groups entries, it has no page of its own.
+if (!content.value || content.value.block === 'folder') {
   await fail({ statusCode: 404, statusMessage: 'Not Found' })
 }
 
 // Live-updates while editing in the b10cks editor; outside preview mode it
-// simply tracks the fetched content tree.
-const tree = usePreviewContent(() => content.value?.content ?? {})
-const block = computed(() => toBlock(content.value, tree.value))
+// simply tracks the fetched entry.
+const block = usePreviewContent(() => toRootBlock(content.value) ?? { id: '', block: '' })
 
 provide('content', content)
 
@@ -74,12 +78,10 @@ useSeoMeta(
 
 <template>
   <div>
-    <NuxtLayout>
-      <B10cksComponent
-        v-if="content && block"
-        :block="block"
-        :content="content"
-      />
-    </NuxtLayout>
+    <B10cksComponent
+      v-if="content"
+      :block="block"
+      :content="content"
+    />
   </div>
 </template>
