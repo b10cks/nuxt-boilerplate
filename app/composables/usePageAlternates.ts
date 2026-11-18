@@ -1,10 +1,7 @@
 import type { IBContent } from '@b10cks/client'
 import { buildLocalizedPath } from '@b10cks/client'
 
-type TranslatableContent = Pick<
-  IBContent,
-  'language_iso' | 'full_slug' | 'translations' | 'published_at'
->
+type TranslatableContent = Pick<IBContent, 'resolved_language_iso' | 'full_slug' | 'translations'>
 
 /** Site path per language an entry really exists in. */
 export type PageAlternates = Record<string, string>
@@ -12,12 +9,11 @@ export type PageAlternates = Record<string, string>
 /**
  * Languages an entry is genuinely available in, each with its own path.
  *
- * b10cks answers a request for an untranslated language with default-language
- * content (`i18n_mode: overlay`) and echoes the *requested* `language_iso`, so
- * the served language proves nothing. Two fallback shapes exist: without any
- * language version there are no `translations`; with an unpublished draft
- * version the published siblings are listed but `published_at` is null. Only a
- * published entry with siblings is a real translation.
+ * b10cks answers a request for an untranslated language with fallback content
+ * (`i18n_mode: overlay`) and echoes the *requested* `language_iso`, so only
+ * `resolved_language_iso` names the language really served: the default
+ * language on a fallback, the entry's own language on an entry that exists in
+ * one non-default language only.
  */
 export function contentAlternates(
   content: TranslatableContent | null | undefined,
@@ -27,14 +23,12 @@ export function contentAlternates(
     return {}
   }
 
-  const translations = content.translations ?? []
-  const isTranslation = translations.length > 0 && Boolean(content.published_at)
-  const served = isTranslation ? content.language_iso : defaultLanguage
+  const served = content.resolved_language_iso ?? defaultLanguage
   // On a draft fallback this is the draft's slug; the default-language sibling
   // below replaces it with the real path.
   const alternates: PageAlternates = { [served]: buildLocalizedPath(content.full_slug, served) }
 
-  for (const translation of translations) {
+  for (const translation of content.translations ?? []) {
     if (translation.published_at) {
       alternates[translation.language_iso] = buildLocalizedPath(
         translation.full_slug,
@@ -54,8 +48,7 @@ export function contentAlternates(
  * requested.
  *
  * Returns whether that language is a real translation. When it is not, the
- * page serves the default language under another language's URL and must be
- * noindex.
+ * page serves another language's content under this URL and must be noindex.
  */
 export function usePageAlternates(
   content: MaybeRefOrGetter<TranslatableContent | null | undefined>,
@@ -69,7 +62,7 @@ export function usePageAlternates(
 
   const alternates = computed(() => contentAlternates(toValue(content), defaultLanguage))
   const isTranslated = computed(() => Object.hasOwn(alternates.value, toValue(language)))
-  const servedLanguage = computed(() => (isTranslated.value ? toValue(language) : defaultLanguage))
+  const servedLanguage = computed(() => toValue(content)?.resolved_language_iso ?? defaultLanguage)
 
   watchEffect(() => setTranslations(alternates.value))
   onScopeDispose(() => {
