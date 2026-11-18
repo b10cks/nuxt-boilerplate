@@ -196,12 +196,18 @@
       @apply mt-6;
     }
 
-    ul {
-      list-style-type: none;
+    ul,
+    ol {
       padding-inline-start: 0;
     }
+    ul {
+      @apply list-disc;
+    }
+    ol {
+      @apply list-decimal;
+    }
     li {
-      @apply relative my-4 ml-8 list-disc;
+      @apply relative my-4 ml-8;
     }
     blockquote {
       @apply mb-12 border-l-4 border-gray-500 py-4 pl-4 text-muted-foreground italic;
@@ -213,12 +219,24 @@
       @apply my-6 border-t border-border;
     }
 
+    /* The fixed layout splits the width between the columns and long words
+       break inside their cell, so a table never scrolls a phone sideways. */
     table {
-      @apply w-full border-collapse;
+      @apply w-full table-fixed border-collapse text-left;
+    }
+    * + table {
+      @apply mt-6;
+    }
+    table + * {
+      @apply mt-6;
     }
 
+    th,
     td {
-      @apply border border-border px-4 py-2;
+      @apply border border-border px-2 py-2 align-top wrap-anywhere md:px-4;
+    }
+    th {
+      @apply bg-muted font-semibold text-accent-foreground;
     }
   }
 }
