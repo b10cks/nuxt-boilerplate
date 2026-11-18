@@ -82,7 +82,8 @@ export default defineEventHandler(async (event) => {
     return
   }
 
-  const redirect = (await loadRedirects(event))[path]
+  const settings = localeSettings(useRuntimeConfig(event).public)
+  const redirect = findRedirect(await loadRedirects(event), path, settings)
   if (redirect) {
     // The query string travels along (campaign parameters, `?drawer=`).
     const query = url.search.slice(1)
